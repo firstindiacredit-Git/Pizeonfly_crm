@@ -69,7 +69,7 @@ Priority :- ${req.body.taskPriority}
         
 Description :- ${req.body.description}
 
-Please review the task details and start working on it at your earliest convenience. You can view and manage this task by logging into our project management tool http://localhost:5173/#/employee-tasks` // plain text body
+Please review the task details and start working on it at your earliest convenience. You can view and manage this task by logging into our project management tool https://pizeonfly-frontend.vercel.app/#/employee-tasks` // plain text body
       };
 
       return transporter.sendMail(mailOptions);
