@@ -7,8 +7,8 @@ const employeeController = require('./controller/employeeAuth');
 const projectRoutes = require('./routes/projectRoutes');
 const adminUserRoutes = require('./userRoute/adminUserRoutes');
 const taskRoutes = require('./routes/taskRoutes');
-const projectStatus = require('./controller/projectStatus');
-const taskMessage = require('./routes/taskMessageRoute');
+const projectMessage = require('./controller/projectMessage');
+const taskMessage = require('./controller/taskMessage');
 const chatRoutes = require('./routes/chatRoutes');
 const clientRoutes = require('./controller/clientAuth');
 
@@ -42,7 +42,7 @@ connection.once('open', () => {
 app.use('/api', clientRoutes);
 app.use('/api', employeeController);
 app.use('/api', projectRoutes);
-app.use('/api', projectStatus);
+app.use('/api', projectMessage);
 app.use('/api', taskMessage);
 app.use('/api', taskRoutes);
 app.use('/api', chatRoutes);

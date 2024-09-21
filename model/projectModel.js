@@ -1,22 +1,22 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const projectSchema = new Schema({
+
+const projectSchema = new mongoose.Schema({
     projectName: {
         type: String,
         required: true
     },
-    projectDate:{
+    projectDate: {
         type: Date,
-        default:Date.now
+        default: Date.now
     },
     projectCategory: {
         type: String,
         required: true
     },
     projectImage: [{
-        type: String,
-        required: true
+        type: String
     }],
     projectStartDate: {
         type: Date,

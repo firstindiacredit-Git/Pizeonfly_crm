@@ -85,7 +85,7 @@ exports.getProjectById = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-exports.searchProjects  = async (req, res) => {
+exports.searchProjects = async (req, res) => {
     const queries = req.query;
     if (!queries.id) {
         return res.status(400).json({ message: "id is required to search" });
