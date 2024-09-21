@@ -14,5 +14,4 @@ router.get('/auth', projectController.getProject)
 router.get('/auth-task', projectController.getProjecttask)
 router.get('/totalProjects', projectController.getTotalProjects);
 
-
 module.exports = router;
