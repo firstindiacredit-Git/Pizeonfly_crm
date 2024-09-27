@@ -19,7 +19,6 @@ dotenv.config();
 
 //Middleware setup
 const allowedOrigins = ['https://crm.pizeonfly.com', 'http://localhost:5173'];
-
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {

@@ -69,7 +69,7 @@ Priority :- ${req.body.taskPriority}
         
 Description :- ${req.body.description}
 
-Please review the task details and start working on it at your earliest convenience. You can view and manage this task by logging into our project management tool https://pizeonfly-frontend.vercel.app/#/employee-tasks` // plain text body
+Please review the task details and start working on it at your earliest convenience. You can view and manage this task by logging into our project management tool https://crm.pizeonfly.com/#/employee-tasks` // plain text body
       };
 
       return transporter.sendMail(mailOptions);
@@ -118,7 +118,7 @@ exports.getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 }).populate('taskAssignPerson');
     const projectNames = tasks.map(task => task.projectName);
-    
+
     const projects = await Project.find({ projectName: { $in: projectNames } }).populate({
       path: 'taskAssignPerson',
       select: 'employeeName'
@@ -130,7 +130,7 @@ exports.getAllTasks = async (req, res) => {
       task.projectMembers = projectPersons;
 
       // Performance calculation
-      task.performancePercentage = task.totalPoints && task.achievedPoints ? 
+      task.performancePercentage = task.totalPoints && task.achievedPoints ?
         (task.achievedPoints / task.totalPoints) * 100 : 0;
     });
 
