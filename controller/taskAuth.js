@@ -87,33 +87,60 @@ Please review the task details and start working on it at your earliest convenie
 };
 
 // Get all tasks
+// exports.getAllTasks = async (req, res) => {
+//   try {
+//     const tasks = await Task.find().sort({ createdAt: -1 }).populate('taskAssignPerson');
+//     const tasks_with_person = [];
+
+//     for (let i = 0; i < tasks.length; i++) {
+//       const project_persons = await Project.find({ projectName: tasks[i].projectName }).populate({
+//         path: 'taskAssignPerson',
+//         select: 'employeeName'
+//       });
+
+//       tasks[i] = tasks[i].toObject();
+//       tasks[i].projectMembers = project_persons;
+
+//       // Performance calculation logic
+//       if (tasks[i].totalPoints && tasks[i].achievedPoints) {
+//         tasks[i].performancePercentage = (tasks[i].achievedPoints / tasks[i].totalPoints) * 100;
+//       } else {
+//         tasks[i].performancePercentage = 0;
+//       }
+//     }
+
+//     res.json(tasks);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 exports.getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 }).populate('taskAssignPerson');
-    const tasks_with_person = [];
+    const projectNames = tasks.map(task => task.projectName);
+    
+    const projects = await Project.find({ projectName: { $in: projectNames } }).populate({
+      path: 'taskAssignPerson',
+      select: 'employeeName'
+    });
 
-    for (let i = 0; i < tasks.length; i++) {
-      const project_persons = await Project.find({ projectName: tasks[i].projectName }).populate({
-        path: 'taskAssignPerson',
-        select: 'employeeName'
-      });
+    tasks.forEach(task => {
+      const projectPersons = projects.filter(project => project.projectName === task.projectName);
+      task = task.toObject();
+      task.projectMembers = projectPersons;
 
-      tasks[i] = tasks[i].toObject();
-      tasks[i].projectMembers = project_persons;
-
-      // Performance calculation logic
-      if (tasks[i].totalPoints && tasks[i].achievedPoints) {
-        tasks[i].performancePercentage = (tasks[i].achievedPoints / tasks[i].totalPoints) * 100;
-      } else {
-        tasks[i].performancePercentage = 0;
-      }
-    }
+      // Performance calculation
+      task.performancePercentage = task.totalPoints && task.achievedPoints ? 
+        (task.achievedPoints / task.totalPoints) * 100 : 0;
+    });
 
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+
 
 
 // Get a single task

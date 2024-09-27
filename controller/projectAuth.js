@@ -44,34 +44,67 @@ exports.createProject = async (req, res) => {
 };
 
 // Get all projects
+// exports.getAllProjects = async (req, res) => {
+//     try {
+//         const projects = await Project.find().populate("taskAssignPerson");
+//         const updatedProjects = new Array(projects.length);
+//         for (let i = 0; i < projects.length; i++) {
+//             const project = projects[i];
+//             const tasks = await Task.find({ projectName: project.projectName });
+//             // console.log(tasks);
+//             const totalTasks = tasks.length;
+//             let completedTaskNum = 0;
+//             for (let i = 0; i < totalTasks; i++) {
+//                 if (tasks[i].isCompleted === true) {
+//                     completedTaskNum++;
+//                 }
+//             }
+//             const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
+//             const status = percent === "100.00" ? "Completed" : "In Progress";
+//             updatedProjects[i] = {
+//                 ...project._doc,
+//                 progress: percent,
+//                 status: status
+//             }
+//         }
+//         res.json(updatedProjects);
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// };
 exports.getAllProjects = async (req, res) => {
     try {
+        // Fetch all projects and task assignment in a single query
         const projects = await Project.find().populate("taskAssignPerson");
-        const updatedProjects = new Array(projects.length);
-        for (let i = 0; i < projects.length; i++) {
-            const project = projects[i];
-            const tasks = await Task.find({ projectName: project.projectName });
-            // console.log(tasks);
-            const totalTasks = tasks.length;
-            let completedTaskNum = 0;
-            for (let i = 0; i < totalTasks; i++) {
-                if (tasks[i].isCompleted === true) {
-                    completedTaskNum++;
-                }
-            }
+
+        // Fetch all tasks in a single query for efficiency
+        const allTasks = await Task.find();
+
+        // Prepare the updated projects array
+        const updatedProjects = projects.map(project => {
+            // Filter tasks that belong to the current project
+            const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
+            
+            const totalTasks = projectTasks.length;
+            const completedTaskNum = projectTasks.filter(task => task.isCompleted).length;
+            
             const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
             const status = percent === "100.00" ? "Completed" : "In Progress";
-            updatedProjects[i] = {
+
+            return {
                 ...project._doc,
                 progress: percent,
                 status: status
-            }
-        }
+            };
+        });
+
+        // Send the updated projects as JSON response
         res.json(updatedProjects);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 // Get a single project by projectId
 exports.getProjectById = async (req, res) => {
