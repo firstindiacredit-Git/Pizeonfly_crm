@@ -13,7 +13,7 @@ dotenv.config();
 exports.createTask = async (req, res) => {
   try {
     // Extracting paths of uploaded files
-    const paths = req.files?.map(file => file.path);
+    const paths = req.files?.map(file => file.location);
 
     // Removing 'uploads\' from paths
     // const newPaths = paths?.map(path => path.replace('uploads\\', ""));

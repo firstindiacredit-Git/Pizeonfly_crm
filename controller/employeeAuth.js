@@ -18,14 +18,14 @@ router.get('/totalEmployees', async (req, res) => {
 // Create a new employee
 router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-        // console.log(req.file);
-        const path = req.file?.path;
-        // console.log(path); 
-        // let newPath = path?.replace('uploads\\', "");
-        if (path === undefined || path === null) {
-            path = "default.jpeg"
+        // Declare path as let to allow reassignment
+        let path = req.file?.location;
+
+        // If path is undefined or null, assign a default image
+        if (!path) {
+            path = "default.jpeg";
         }
-        // console.log(path);
+
         req.body.employeeImage = path;
         const employee = new Employee(req.body);
         const savedEmployee = await employee.save();
@@ -34,6 +34,7 @@ router.post('/employees', uploadEmployee.single("employeeImage"), async (req, re
         res.status(400).json({ message: err.message });
     }
 });
+
 
 router.post("/employeelogin", async (req, res) => {
     const body = req.body;
@@ -125,7 +126,13 @@ router.get("/search", async (req, res) => {
 // Update an employee
 router.put('/employees/:employeeId', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-        const updatedEmployee = await Employee.findByIdAndUpdate(req.params.employeeId, req.body, { new: true });
+        // Use req.file for image upload if it exists
+        const updatedData = req.body;
+        if (req.file) {
+            updatedData.employeeImage = req.file.location; // Assuming path of the image is saved
+        }
+        
+        const updatedEmployee = await Employee.findByIdAndUpdate(req.params.employeeId, updatedData, { new: true });
         if (!updatedEmployee) {
             return res.status(404).json({ message: 'Employee not found' });
         }
@@ -134,6 +141,7 @@ router.put('/employees/:employeeId', uploadEmployee.single("employeeImage"), asy
         res.status(400).json({ message: err.message });
     }
 });
+
 
 // Delete an employee
 router.delete('/employees/:employeeId', async (req, res) => {

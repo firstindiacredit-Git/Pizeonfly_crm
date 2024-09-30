@@ -20,7 +20,7 @@ exports.createProject = async (req, res) => {
     try {
         // console.log(req.file);
         // const path = req.file?.path;
-        const paths = req.files?.map(file => file.path);
+        const paths = req.files?.map(file => file.location);
         // console.log(path);
         // const newPath = path?.replace('uploads\\', "");
         // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
@@ -44,34 +44,6 @@ exports.createProject = async (req, res) => {
 };
 
 // Get all projects
-// exports.getAllProjects = async (req, res) => {
-//     try {
-//         const projects = await Project.find().populate("taskAssignPerson");
-//         const updatedProjects = new Array(projects.length);
-//         for (let i = 0; i < projects.length; i++) {
-//             const project = projects[i];
-//             const tasks = await Task.find({ projectName: project.projectName });
-//             // console.log(tasks);
-//             const totalTasks = tasks.length;
-//             let completedTaskNum = 0;
-//             for (let i = 0; i < totalTasks; i++) {
-//                 if (tasks[i].isCompleted === true) {
-//                     completedTaskNum++;
-//                 }
-//             }
-//             const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
-//             const status = percent === "100.00" ? "Completed" : "In Progress";
-//             updatedProjects[i] = {
-//                 ...project._doc,
-//                 progress: percent,
-//                 status: status
-//             }
-//         }
-//         res.json(updatedProjects);
-//     } catch (err) {
-//         res.status(500).json({ message: err.message });
-//     }
-// };
 exports.getAllProjects = async (req, res) => {
     try {
         // Fetch all projects and task assignment in a single query
