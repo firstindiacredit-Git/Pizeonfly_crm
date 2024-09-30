@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Client = require('../model/clientModel');
-const { upload } = require('../utils/multerConfig');
+const { uploadClient } = require('../utils/multerConfig');
 
 // Total Clients
 router.get('/totalClients', async (req, res) => {
@@ -15,14 +15,14 @@ router.get('/totalClients', async (req, res) => {
 
 
 // Create a new client
-router.post('/clients', upload.single("clientImage"), async (req, res) => {
+router.post('/clients', uploadClient.single("clientImage"), async (req, res) => {
   try {
     const path = req.file?.path;
-    let newPath = path?.replace('uploads\\', "");
-    if (newPath === undefined || newPath === null) {
-      newPath = "default.jpeg";
+    // let newPath = path?.replace('uploads\\', "");
+    if (path === undefined || path === null) {
+      path = "./uploads/default.jpeg";
     }
-    req.body.clientImage = newPath;
+    req.body.clientImage = path;
     const client = new Client(req.body);
     await client.save();
     res.status(201).send(client);

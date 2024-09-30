@@ -23,7 +23,7 @@ exports.createProject = async (req, res) => {
         const paths = req.files?.map(file => file.path);
         // console.log(path);
         // const newPath = path?.replace('uploads\\', "");
-        const newPaths = paths?.map(path => path.replace('uploads\\', ""));
+        // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
 
         // console.log(req.body, 'body');
         const taskAssigner = req.body.taskAssignPerson;
@@ -32,7 +32,7 @@ exports.createProject = async (req, res) => {
         // console.log(filteredTaskAssigner);
 
         // console.log(req.body.projectImage);
-        req.body.projectImage = newPaths;
+        req.body.projectImage = paths;
         // console.log(req.body, "body");
         const project = new Project({ ...req.body, taskAssignPerson: filteredTaskAssigner });
         // console.log(project, "project");

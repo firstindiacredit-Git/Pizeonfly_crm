@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Employee = require('../model/employeeModel');
-const { upload } = require('../utils/multerConfig');
+const { uploadEmployee } = require('../utils/multerConfig');
 const jwt = require('jsonwebtoken');
 
 //Total Employee
@@ -16,17 +16,17 @@ router.get('/totalEmployees', async (req, res) => {
 
 
 // Create a new employee
-router.post('/employees', upload.single("employeeImage"), async (req, res) => {
+router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
         // console.log(req.file);
         const path = req.file?.path;
         // console.log(path); 
-        let newPath = path?.replace('uploads\\', "");
-        if (newPath === undefined || newPath === null) {
-            newPath = "default.jpeg"
+        // let newPath = path?.replace('uploads\\', "");
+        if (path === undefined || path === null) {
+            path = "default.jpeg"
         }
-        // console.log(newPath);
-        req.body.employeeImage = newPath;
+        // console.log(path);
+        req.body.employeeImage = path;
         const employee = new Employee(req.body);
         const savedEmployee = await employee.save();
         res.status(201).json(savedEmployee);
@@ -123,7 +123,7 @@ router.get("/search", async (req, res) => {
 })
 
 // Update an employee
-router.put('/employees/:employeeId', upload.single("employeeImage"), async (req, res) => {
+router.put('/employees/:employeeId', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
         const updatedEmployee = await Employee.findByIdAndUpdate(req.params.employeeId, req.body, { new: true });
         if (!updatedEmployee) {

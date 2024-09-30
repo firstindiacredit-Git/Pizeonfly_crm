@@ -5,7 +5,7 @@ const employeeController = require('../controller/employeeAuth');
 
 console.log(upload);
 // Define routes for employee-related operations
-router.post('/employees', upload.single("employeeImage"), employeeController.createEmployee);
+router.post('/employees', uploadEmployee.single("employeeImage"), employeeController.createEmployee);
 
 
 

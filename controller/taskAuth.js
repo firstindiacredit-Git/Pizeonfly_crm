@@ -16,7 +16,7 @@ exports.createTask = async (req, res) => {
     const paths = req.files?.map(file => file.path);
 
     // Removing 'uploads\' from paths
-    const newPaths = paths?.map(path => path.replace('uploads\\', ""));
+    // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
 
     // Filtering task assigners to remove empty strings
     const taskAssigner = req.body.taskAssignPerson?.filter(task => task !== "");
@@ -35,7 +35,7 @@ exports.createTask = async (req, res) => {
     }
 
     // Adding paths of uploaded images to req.body
-    req.body.taskImages = newPaths;
+    req.body.taskImages = paths;
 
     // Creating a new Task instance
     const task = new Task({ ...req.body, taskAssignPerson: taskAssigner });
@@ -59,17 +59,17 @@ exports.createTask = async (req, res) => {
         from: process.env.USER_EMAIL, // sender address
         to: email, // list of receivers
         subject: 'Pizeonfly CRM Task', // subject line
-        text: `You have been assigned a new task for the project :- ${req.body.projectName}.
-
-Assigned By :- ${req.body.assignedBy}
-
-Due Date :- ${req.body.taskEndDate}
-
-Priority :- ${req.body.taskPriority}
-        
-Description :- ${req.body.description}
-
-Please review the task details and start working on it at your earliest convenience. You can view and manage this task by logging into our project management tool https://crm.pizeonfly.com/#/employee-tasks` // plain text body
+        html: `
+          <h2>New Task Assigned: ${req.body.projectName}</h2>
+          <p><strong>Assigned By:</strong> ${req.body.assignedBy}</p>
+          <p><strong>Due Date:</strong> ${req.body.taskEndDate}</p>
+          <p><strong>Priority:</strong> ${req.body.taskPriority}</p>
+          <p><strong>Description:</strong>${req.body.description}</p>
+          <br/>
+          <p>Please review the task details and start working on it at your earliest convenience.</p>
+          <p>You can view and manage this task by logging into our project management tool:</p>
+          <a href="https://crm.pizeonfly.com/#/employee-tasks">Pizeonfly CRM Employee Tasks</a>
+        `
       };
 
       return transporter.sendMail(mailOptions);
