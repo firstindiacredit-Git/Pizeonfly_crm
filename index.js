@@ -39,7 +39,7 @@ app.use(express.static("./uploads"));
 // MongoDB setup
 const url = process.env.MONGODB_URI;
 // console.log(url);
-mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(url);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
