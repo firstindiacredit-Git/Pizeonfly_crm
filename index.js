@@ -39,7 +39,7 @@ app.use(express.static("./uploads"));
 // MongoDB setup
 const url = process.env.MONGODB_URI;
 // console.log(url);
-mongoose.connect(url);
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.get("/", (req, res) => {
   res.send("Hello World");
@@ -70,7 +70,7 @@ app.use("/api", adminUserRoutes);
 // });
 
 //Port setup
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });
