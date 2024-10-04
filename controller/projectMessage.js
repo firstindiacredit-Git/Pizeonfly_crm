@@ -1,13 +1,16 @@
+// routes/messageRoutes.js
 const express = require('express');
 const Message = require('../model/projectMessageModel');
+const { uploadMessage } = require('../utils/multerConfig');
 const router = express.Router();
 
 // Create a message
-router.post('/projectMessage', async (req, res) => {
+router.post('/projectMessage', uploadMessage.array('files', 5), async (req, res) => { // Limit to 5 files
   const { content, senderId, projectId } = req.body;
+  const fileUrls = req.files ? req.files.map(file => file.location) : []; // Get URLs of uploaded files
 
   try {
-    const message = new Message({ content, senderId, projectId });
+    const message = new Message({ content, senderId, projectId, fileUrls });
     await message.save();
     res.status(201).json(message);
   } catch (error) {
@@ -24,7 +27,5 @@ router.get('/messages/:projectId', async (req, res) => {
     res.status(500).json({ message: 'Error fetching messages', error });
   }
 });
-
-
 
 module.exports = router;

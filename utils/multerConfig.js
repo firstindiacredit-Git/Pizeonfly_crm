@@ -67,12 +67,22 @@ const clientStorage = multerS3({
     cb(null, 'uploads/client/' + file.fieldname + '-' + uniqueSuffix);
   }
 });
+// Configure Multer storage for Message
+const messageStorage = multerS3({
+  s3: s3,
+  bucket: process.env.AWS_BUCKET_NAME,
+  key: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + file.originalname;
+    cb(null, 'uploads/message/' + file.fieldname + '-' + uniqueSuffix);
+  }
+});
 
 // Create Multer instances for each type of file upload
 const uploadEmployee = multer({ storage: employeeStorage, fileFilter: fileFilter });
 const uploadProject = multer({ storage: projectStorage, fileFilter: fileFilter });
 const uploadTask = multer({ storage: taskStorage, fileFilter: fileFilter });
 const uploadClient = multer({ storage: clientStorage, fileFilter: fileFilter });
+const uploadMessage = multer({ storage: messageStorage, fileFilter: fileFilter });
 
 
-module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient };
+module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage };
