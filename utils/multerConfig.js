@@ -32,6 +32,7 @@ const fileFilter = (req, file, cb) => {
 const employeeStorage = multerS3({
   s3: s3,
   bucket: process.env.AWS_BUCKET_NAME,
+  acl: 'public-read',  // Set ACL to public-read
   key: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + file.originalname;
     cb(null, 'uploads/employee/' + file.fieldname + '-' + uniqueSuffix);

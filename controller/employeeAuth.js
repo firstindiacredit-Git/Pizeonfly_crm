@@ -23,7 +23,7 @@ router.post('/employees', uploadEmployee.single("employeeImage"), async (req, re
 
         // If path is undefined or null, assign a default image
         if (!path) {
-            path = "default.jpeg";
+            path = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/default.jpeg`;
         }
 
         req.body.employeeImage = path;
