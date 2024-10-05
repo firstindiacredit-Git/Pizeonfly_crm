@@ -35,7 +35,6 @@ router.post('/employees', uploadEmployee.single("employeeImage"), async (req, re
     }
 });
 
-
 router.post("/employeelogin", async (req, res) => {
     const body = req.body;
     if (!body) {
