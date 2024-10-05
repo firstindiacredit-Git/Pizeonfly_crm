@@ -10,13 +10,88 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // Create Task
+// exports.createTask = async (req, res) => {
+//   try {
+//     // Extracting paths of uploaded files
+//     const paths = req.files?.map(file => file.location);
+
+//     // Removing 'uploads\' from paths
+//     // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
+
+//     // Filtering task assigners to remove empty strings
+//     const taskAssigner = req.body.taskAssignPerson?.filter(task => task !== "");
+
+//     // Fetching emails of task assigners
+//     const employees = [];
+//     for (let i = 0; i < taskAssigner.length; i++) {
+//       try {
+//         const taskPerson = await Employee.findById(taskAssigner[i]);
+//         if (taskPerson) {
+//           employees.push(taskPerson.emailid);
+//         }
+//       } catch (err) {
+//         console.error(`Error fetching employee with ID ${taskAssigner[i]}: ${err.message}`);
+//       }
+//     }
+
+//     // Adding paths of uploaded images to req.body
+//     req.body.taskImages = paths;
+
+//     // Creating a new Task instance
+//     const task = new Task({ ...req.body, taskAssignPerson: taskAssigner });
+
+//     // Saving the task to the database
+//     const savedTask = await task.save();
+//     // console.log(savedTask);
+
+//     // Email configuration
+//     const transporter = nodemailer.createTransport({
+//       service: 'gmail',
+//       auth: {
+//         user: process.env.USER_EMAIL,
+//         pass: process.env.USER_PASSWORD
+//       }
+//     });
+
+//     // Sending email to each task assigner
+//     const sendEmailPromises = employees.map(email => {
+//       const mailOptions = {
+//         from: process.env.USER_EMAIL, // sender address
+//         to: email, // list of receivers
+//         subject: 'Pizeonfly CRM Task', // subject line
+// html: `
+//   <h2>New Task Assigned: ${req.body.projectName}</h2>
+//   <p><strong>Assigned By:</strong> ${req.body.assignedBy}</p>
+//   <p><strong>Due Date:</strong> ${req.body.taskEndDate}</p>
+//   <p><strong>Priority:</strong> ${req.body.taskPriority}</p>
+//   <p><strong>Description:</strong>${req.body.description}</p>
+//   <br/>
+//   <p>Please review the task details and start working on it at your earliest convenience.</p>
+//   <p>You can view and manage this task by logging into our project management tool:</p>
+//   <a href="https://crm.pizeonfly.com/#/employee-tasks">Pizeonfly CRM Employee Tasks</a>
+// `
+//       };
+
+//       return transporter.sendMail(mailOptions);
+//     });
+
+//     await Promise.all(sendEmailPromises);
+
+//     // console.log(savedTask);
+//     // Sending the saved task as response
+//     res.status(201).json(savedTask);
+//   } catch (error) {
+//     // Handling errors
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 exports.createTask = async (req, res) => {
   try {
     // Extracting paths of uploaded files
-    const paths = req.files?.map(file => file.location);
+    const paths = req.files?.map(file => file.path);
 
     // Removing 'uploads\' from paths
-    // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
+    const newPaths = paths?.map(path => path.replace('uploads\\', ""));
 
     // Filtering task assigners to remove empty strings
     const taskAssigner = req.body.taskAssignPerson?.filter(task => task !== "");
@@ -35,7 +110,7 @@ exports.createTask = async (req, res) => {
     }
 
     // Adding paths of uploaded images to req.body
-    req.body.taskImages = paths;
+    req.body.taskImages = newPaths;
 
     // Creating a new Task instance
     const task = new Task({ ...req.body, taskAssignPerson: taskAssigner });
@@ -87,33 +162,6 @@ exports.createTask = async (req, res) => {
 };
 
 // Get all tasks
-// exports.getAllTasks = async (req, res) => {
-//   try {
-//     const tasks = await Task.find().sort({ createdAt: -1 }).populate('taskAssignPerson');
-//     const tasks_with_person = [];
-
-//     for (let i = 0; i < tasks.length; i++) {
-//       const project_persons = await Project.find({ projectName: tasks[i].projectName }).populate({
-//         path: 'taskAssignPerson',
-//         select: 'employeeName'
-//       });
-
-//       tasks[i] = tasks[i].toObject();
-//       tasks[i].projectMembers = project_persons;
-
-//       // Performance calculation logic
-//       if (tasks[i].totalPoints && tasks[i].achievedPoints) {
-//         tasks[i].performancePercentage = (tasks[i].achievedPoints / tasks[i].totalPoints) * 100;
-//       } else {
-//         tasks[i].performancePercentage = 0;
-//       }
-//     }
-
-//     res.json(tasks);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 exports.getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 }).populate('taskAssignPerson');

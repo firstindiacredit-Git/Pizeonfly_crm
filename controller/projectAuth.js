@@ -16,14 +16,40 @@ exports.getTotalProjects = async (req, res) => {
 };
 
 // Create a new project
+// exports.createProject = async (req, res) => {
+//     try {
+//         // console.log(req.file);
+//         // const path = req.file?.path;
+//         const paths = req.files?.map(file => file.location);
+//         // console.log(path);
+//         // const newPath = path?.replace('uploads\\', "");
+//         // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
+
+//         // console.log(req.body, 'body');
+//         const taskAssigner = req.body.taskAssignPerson;
+//         // console.log(taskAssigner, 'taskassigner')
+//         const filteredTaskAssigner = taskAssigner.filter((task) => task !== "");
+//         // console.log(filteredTaskAssigner);
+
+//         // console.log(req.body.projectImage);
+//         req.body.projectImage = paths;
+//         // console.log(req.body, "body");
+//         const project = new Project({ ...req.body, taskAssignPerson: filteredTaskAssigner });
+//         // console.log(project, "project");
+//         const savedProject = await project.save();
+//         res.status(201).json(savedProject);
+//     } catch (err) {
+//         res.status(400).json({ message: err.message });
+//     }
+// };
 exports.createProject = async (req, res) => {
     try {
         // console.log(req.file);
         // const path = req.file?.path;
-        const paths = req.files?.map(file => file.location);
+        const paths = req.files?.map(file => file.path);
         // console.log(path);
         // const newPath = path?.replace('uploads\\', "");
-        // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
+        const newPaths = paths?.map(path => path.replace('uploads\\', ""));
 
         // console.log(req.body, 'body');
         const taskAssigner = req.body.taskAssignPerson;
@@ -32,7 +58,7 @@ exports.createProject = async (req, res) => {
         // console.log(filteredTaskAssigner);
 
         // console.log(req.body.projectImage);
-        req.body.projectImage = paths;
+        req.body.projectImage = newPaths;
         // console.log(req.body, "body");
         const project = new Project({ ...req.body, taskAssignPerson: filteredTaskAssigner });
         // console.log(project, "project");

@@ -16,17 +16,35 @@ router.get('/totalEmployees', async (req, res) => {
 
 
 // Create a new employee
+// router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
+//     try {
+//         // Declare path as let to allow reassignment
+//         let path = req.file?.location;
+
+//         // If path is undefined or null, assign a default image
+//         if (!path) {
+//             path = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/employee/default.jpeg`;
+//         }
+
+//         req.body.employeeImage = path;
+//         const employee = new Employee(req.body);
+//         const savedEmployee = await employee.save();
+//         res.status(201).json(savedEmployee);
+//     } catch (err) {
+//         res.status(400).json({ message: err.message });
+//     }
+// });
 router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-        // Declare path as let to allow reassignment
-        let path = req.file?.location;
-
-        // If path is undefined or null, assign a default image
-        if (!path) {
-            path = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/employee/default.jpeg`;
+        // console.log(req.file);
+        const path = req.file?.path;
+        // console.log(path); 
+        let newPath = path?.replace('uploads\\', "");
+        if (newPath === undefined || newPath === null) {
+            newPath = "default.jpeg"
         }
-
-        req.body.employeeImage = path;
+        // console.log(newPath);
+        req.body.employeeImage = newPath;
         const employee = new Employee(req.body);
         const savedEmployee = await employee.save();
         res.status(201).json(savedEmployee);
@@ -130,7 +148,7 @@ router.put('/employees/:employeeId', uploadEmployee.single("employeeImage"), asy
         if (req.file) {
             updatedData.employeeImage = req.file.location; // Assuming path of the image is saved
         }
-        
+
         const updatedEmployee = await Employee.findByIdAndUpdate(req.params.employeeId, updatedData, { new: true });
         if (!updatedEmployee) {
             return res.status(404).json({ message: 'Employee not found' });

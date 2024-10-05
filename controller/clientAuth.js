@@ -15,14 +15,35 @@ router.get('/totalClients', async (req, res) => {
 
 
 // Create a new client
+// router.post('/clients', uploadClient.single("clientImage"), async (req, res) => {
+//   try {
+//     const path = req.file?.path;
+//     // let newPath = path?.replace('uploads\\', "");
+//     if (path === undefined || path === null) {
+//       path = "./uploads/default.jpeg";
+//     }
+//     req.body.clientImage = path;
+//     const client = new Client(req.body);
+//     await client.save();
+//     res.status(201).send(client);
+//   } catch (error) {
+//     if (error.name === 'ValidationError') {
+//       const errors = Object.values(error.errors).map(err => err.message);
+//       res.status(400).send({ errors });
+//     } else {
+//       res.status(500).send(error);
+//     }
+//   }
+// });
+
 router.post('/clients', uploadClient.single("clientImage"), async (req, res) => {
   try {
     const path = req.file?.path;
-    // let newPath = path?.replace('uploads\\', "");
-    if (path === undefined || path === null) {
-      path = "./uploads/default.jpeg";
+    let newPath = path?.replace('uploads\\', "");
+    if (newPath === undefined || newPath === null) {
+      newPath = "default.jpeg";
     }
-    req.body.clientImage = path;
+    req.body.clientImage = newPath;
     const client = new Client(req.body);
     await client.save();
     res.status(201).send(client);
@@ -35,6 +56,7 @@ router.post('/clients', uploadClient.single("clientImage"), async (req, res) => 
     }
   }
 });
+
 
 // Get all clients
 router.get('/clients', async (req, res) => {

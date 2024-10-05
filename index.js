@@ -9,7 +9,6 @@ const adminUserRoutes = require("./userRoute/adminUserRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const projectMessage = require("./controller/projectMessage");
 const taskMessage = require("./controller/taskMessage");
-const chatRoutes = require("./routes/chatRoutes");
 const clientRoutes = require("./controller/clientAuth");
 
 const cors = require("cors");
@@ -62,7 +61,6 @@ app.use("/api", projectRoutes);
 app.use("/api", projectMessage);
 app.use("/api", taskMessage);
 app.use("/api", taskRoutes);
-app.use("/api", chatRoutes);
 app.use("/api", adminUserRoutes);
 
 // app.get('*', (req, res) => {

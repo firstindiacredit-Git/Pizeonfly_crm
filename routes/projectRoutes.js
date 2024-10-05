@@ -7,7 +7,7 @@ router.post('/projects', uploadProject.array('projectImage', 10), projectControl
 router.get('/projects', projectController.getAllProjects);
 router.get('/projects/:projectId', projectController.getProjectById);
 router.get('/pro/search', projectController.searchProjects);
-router.put('/projects/:projectId', uploadProject.array("projectImage",10), projectController.updateProject);
+router.put('/projects/:projectId', uploadProject.array("projectImage", 10), projectController.updateProject);
 router.delete('/projects/:projectId', projectController.deleteProject);
 
 router.get('/auth', projectController.getProject)
