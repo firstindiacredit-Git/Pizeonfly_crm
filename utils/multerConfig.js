@@ -35,6 +35,7 @@ const employeeStorage = multerS3({
   acl: 'public-read',  // Set ACL to public-read
   key: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + file.originalname;
+    console.log("Uploading file:", 'uploads/employee/' + file.fieldname + '-' + uniqueSuffix);
     cb(null, 'uploads/employee/' + file.fieldname + '-' + uniqueSuffix);
   }
 });
