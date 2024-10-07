@@ -36,11 +36,12 @@ router.get('/totalEmployees', async (req, res) => {
 // });
 router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-        // console.log(req.file);
+        console.log(req.file.path);
         const path = req.file?.path;
         // console.log(path); 
         // let newPath = path?.replace('uploads\\', "");
         let newPath = path?.replace(/uploads[\\/]/, ""); // Handles both Windows and Linux slashes
+        console.log("Modified Path:", newPath);  // Debug the modified path
         if (newPath === undefined || newPath === null) {
             newPath = "default.jpeg"
         }
