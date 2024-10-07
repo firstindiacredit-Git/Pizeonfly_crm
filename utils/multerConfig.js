@@ -1,5 +1,6 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 // File filter to check the allowed file types
 const fileFilter = (req, file, cb) => {
@@ -16,14 +17,20 @@ const fileFilter = (req, file, cb) => {
 
 const employeeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './uploads')
+    const uploadPath = './uploads/employee';  // Path for employee images
+
+    // Check if the directory exists
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });  // Create the directory if it doesn't exist
+    }
+
+    cb(null, uploadPath);  // Save file to the directory
   },
   filename: function (req, file, cb) {
-    // console.log(req.file, "multer1");
-    const uniqueSuffix = Date.now() + '-' + file.originalname
-    cb(null, file.fieldname + '-' + uniqueSuffix)
+    const uniqueSuffix = Date.now() + '-' + file.originalname;
+    cb(null, file.fieldname + '-' + uniqueSuffix);  // Generate a unique filename
   }
-})
+});
 
 const projectStorage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -64,7 +71,7 @@ const messageStorage = multer.diskStorage({
   }
 });
 
-const uploadEmployee = multer({ 
+const uploadEmployee = multer({
   storage: employeeStorage,
   fileFilter: fileFilter // Apply the file filter  
 });
@@ -78,13 +85,13 @@ const uploadTask = multer({
   storage: taskStorage,
   fileFilter: fileFilter // Apply the file filter 
 });
-const uploadClient = multer({ 
+const uploadClient = multer({
   storage: clientStorage,
   fileFilter: fileFilter // Apply the file filter 
 });
-const uploadMessage = multer({ 
+const uploadMessage = multer({
   storage: messageStorage,
   fileFilter: fileFilter // Apply the file filter 
 });
 
-module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage}
+module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage }
