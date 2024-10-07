@@ -54,23 +54,22 @@ router.get('/totalEmployees', async (req, res) => {
 // });
 router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-        let path = req.file?.path || "uploads/default.jpeg";  // Set default image if no file is uploaded
-        
-        req.body.employeeImage = path;  // Attach image path to employee body
-        
-        const employee = new Employee(req.body);  // Create a new employee instance
-        const savedEmployee = await employee.save();  // Save the employee to the database
-
-        // Construct the full URL for the image
-        const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`;
-        savedEmployee.employeeImage = `${baseUrl}${path}`;  // Add the full URL to the saved employee object
-        
-        
-        res.status(201).json(savedEmployee);  // Send success response
+      let path = req.file?.path.replace(/\\/g, "/"); // Normalize path separators for URLs
+      if (!path) {
+        path = "default.jpeg";
+      }
+      
+      // Remove 'uploads/employee/' from the path
+      req.body.employeeImage = path.replace('uploads/employee/', '');
+  
+      const employee = new Employee(req.body);
+      const savedEmployee = await employee.save();
+      res.status(201).json(savedEmployee);
     } catch (err) {
-        res.status(400).json({ message: err.message });  // Send error response
+      res.status(400).json({ message: err.message });
     }
-});
+  });
+  
 
 
 router.post("/employeelogin", async (req, res) => {
