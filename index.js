@@ -58,7 +58,7 @@ connection.once("open", () => {
 
 //Route setup
 app.use("/api", clientRoutes);
-app.use("/api", employeeController);
+app.use("/api", express.static(path.join(__dirname, './uploads/employee')), employeeController);
 app.use("/api", projectRoutes);
 app.use("/api", projectMessage);
 app.use("/api", taskMessage);

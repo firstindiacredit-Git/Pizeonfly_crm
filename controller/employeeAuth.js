@@ -39,7 +39,8 @@ router.post('/employees', uploadEmployee.single("employeeImage"), async (req, re
         // console.log(req.file);
         const path = req.file?.path;
         // console.log(path); 
-        let newPath = path?.replace('uploads\\', "");
+        // let newPath = path?.replace('uploads\\', "");
+        let newPath = path?.replace(`uploads${path.sep}`, "");  // Cross-platform separator fix
         if (newPath === undefined || newPath === null) {
             newPath = "default.jpeg"
         }
