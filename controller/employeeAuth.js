@@ -34,43 +34,24 @@ router.get('/totalEmployees', async (req, res) => {
 //         res.status(400).json({ message: err.message });
 //     }
 // });
-// router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
-//     try {
-//         // console.log(req.file);
-//         const path = req.file?.path;
-//         // console.log(path); 
-//         // let newPath = path?.replace('uploads\\', "");
-//         if (path === undefined || path === null) {
-//             path = "default.jpeg"
-//         }
-//         // console.log(newPath);
-//         req.body.employeeImage = path;
-//         const employee = new Employee(req.body);
-//         const savedEmployee = await employee.save();
-//         res.status(201).json(savedEmployee);
-//     } catch (err) {
-//         res.status(400).json({ message: err.message });
-//     }
-// });
 router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-      let path = req.file?.path.replace(/\\/g, "/"); // Normalize path separators for URLs
-      if (!path) {
-        path = "default.jpeg";
-      }
-      
-      // Remove 'uploads/employee/' from the path
-      req.body.employeeImage = path.replace('uploads/employee/', '');
-  
-      const employee = new Employee(req.body);
-      const savedEmployee = await employee.save();
-      res.status(201).json(savedEmployee);
+        // console.log(req.file);
+        const path = req.file?.path;
+        // console.log(path); 
+        let newPath = path?.replace('uploads\\', "");
+        if (newPath === undefined || newPath === null) {
+            newPath = "default.jpeg"
+        }
+        // console.log(newPath);
+        req.body.employeeImage = newPath;
+        const employee = new Employee(req.body);
+        const savedEmployee = await employee.save();
+        res.status(201).json(savedEmployee);
     } catch (err) {
-      res.status(400).json({ message: err.message });
+        res.status(400).json({ message: err.message });
     }
-  });
-  
-
+});
 
 router.post("/employeelogin", async (req, res) => {
     const body = req.body;

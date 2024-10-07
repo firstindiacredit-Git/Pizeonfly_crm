@@ -31,11 +31,9 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-// app.use(express.static("./uploads"));
-app.use('/employee', express.static(path.join(__dirname, 'uploads/employee')));
+app.use(express.static("./uploads"));
 
-
-// app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // MongoDB setup
 const url = process.env.MONGODB_URI;
@@ -65,9 +63,9 @@ app.use("/api", taskMessage);
 app.use("/api", taskRoutes);
 app.use("/api", adminUserRoutes);
 
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-// });
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 //Port setup
 const port = process.env.PORT || 4000;
