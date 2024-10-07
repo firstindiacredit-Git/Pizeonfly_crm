@@ -60,6 +60,11 @@ router.post('/employees', uploadEmployee.single("employeeImage"), async (req, re
         
         const employee = new Employee(req.body);  // Create a new employee instance
         const savedEmployee = await employee.save();  // Save the employee to the database
+
+        // Construct the full URL for the image
+        const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`;
+        savedEmployee.employeeImage = `${baseUrl}${path}`;  // Add the full URL to the saved employee object
+        
         
         res.status(201).json(savedEmployee);  // Send success response
     } catch (err) {
