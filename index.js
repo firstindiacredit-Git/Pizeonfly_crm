@@ -17,19 +17,19 @@ const path = require("path");
 dotenv.config();
 
 //Middleware setup
-const allowedOrigins = ['https://crm.pizeonfly.com', 'http://localhost:5173'];
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: 'GET,POST,PUT,DELETE,PATCH', 
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-app.use(cors(corsOptions));
+// const allowedOrigins = ['https://crm.pizeonfly.com', 'http://localhost:5173'];
+// const corsOptions = {
+//   origin: (origin, callback) => {
+//     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: 'GET,POST,PUT,DELETE,PATCH', 
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// };
+app.use(cors());
 app.use(express.json());
 app.use(express.static("./uploads"));
 
@@ -37,22 +37,18 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 // MongoDB setup
 const url = process.env.MONGODB_URI;
-// console.log(url);
 mongoose.connect(url);
 
-app.get("/", (req, res) => {
-  res.send("Hello World");
-});
-
 const connection = mongoose.connection;
-
-connection.on(
-  "error",
-  console.error.bind(console, "MongoDB connection error:")
-);
-connection.once("open", () => {
-  console.log("MongoDB database connected");
+connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
+connection.once('open', () => {
+  console.log('MongoDB database connected');
 });
+
+
+// app.get("/", (req, res) => {
+//   res.send("Hello World");
+// });
 
 //Route setup
 app.use("/api", clientRoutes);
