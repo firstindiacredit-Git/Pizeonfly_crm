@@ -17,18 +17,16 @@ const fileFilter = (req, file, cb) => {
 
 const employeeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = './uploads/employee';  // Path for employee images
-
-    // Check if the directory exists
+    const uploadPath = './uploads/employee'; // Define the path
+    // Check if directory exists, if not, create it
     if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });  // Create the directory if it doesn't exist
+      fs.mkdirSync(uploadPath, { recursive: true });
     }
-
-    cb(null, uploadPath);  // Save file to the directory
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + file.originalname;
-    cb(null, file.fieldname + '-' + uniqueSuffix);  // Generate a unique filename
+    cb(null, file.fieldname + '-' + uniqueSuffix);
   }
 });
 
