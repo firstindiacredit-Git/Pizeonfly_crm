@@ -40,7 +40,7 @@ router.post('/employees', uploadEmployee.single("employeeImage"), async (req, re
         const path = req.file?.path;
         // console.log(path); 
         // let newPath = path?.replace('uploads\\', "");
-        let newPath = path?.replace(`uploads${path.sep}`, "");  // Cross-platform separator fix
+        let newPath = path?.replace(/uploads[\\/]/, ""); // Handles both Windows and Linux slashes
         if (newPath === undefined || newPath === null) {
             newPath = "default.jpeg"
         }
