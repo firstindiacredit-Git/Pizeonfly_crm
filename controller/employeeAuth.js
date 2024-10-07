@@ -34,27 +34,39 @@ router.get('/totalEmployees', async (req, res) => {
 //         res.status(400).json({ message: err.message });
 //     }
 // });
+// router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
+//     try {
+//         // console.log(req.file);
+//         const path = req.file?.path;
+//         // console.log(path); 
+//         // let newPath = path?.replace('uploads\\', "");
+//         if (path === undefined || path === null) {
+//             path = "default.jpeg"
+//         }
+//         // console.log(newPath);
+//         req.body.employeeImage = path;
+//         const employee = new Employee(req.body);
+//         const savedEmployee = await employee.save();
+//         res.status(201).json(savedEmployee);
+//     } catch (err) {
+//         res.status(400).json({ message: err.message });
+//     }
+// });
 router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-        // console.log(req.file.path);
-        const path = req.file?.path;
-        // console.log(path); 
-        // let newPath = path?.replace('uploads\\', "");
-        let newPath = path;
-        // let newPath = path?.replace(/uploads[\\/]/, ""); // Handles both Windows and Linux slashes
-        // console.log("Modified Path:", newPath);  // Debug the modified path
-        if (newPath === undefined || newPath === null) {
-            newPath = "default.jpeg"
-        }
-        // console.log(newPath);
-        req.body.employeeImage = newPath;
-        const employee = new Employee(req.body);
-        const savedEmployee = await employee.save();
-        res.status(201).json(savedEmployee);
+        let path = req.file?.path || "uploads/default.jpeg";  // Set default image if no file is uploaded
+        
+        req.body.employeeImage = path;  // Attach image path to employee body
+        
+        const employee = new Employee(req.body);  // Create a new employee instance
+        const savedEmployee = await employee.save();  // Save the employee to the database
+        
+        res.status(201).json(savedEmployee);  // Send success response
     } catch (err) {
-        res.status(400).json({ message: err.message });
+        res.status(400).json({ message: err.message });  // Send error response
     }
 });
+
 
 router.post("/employeelogin", async (req, res) => {
     const body = req.body;
