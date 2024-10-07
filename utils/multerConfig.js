@@ -16,7 +16,7 @@ const fileFilter = (req, file, cb) => {
 
 const employeeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './uploads/employee')
+    cb(null, './uploads')
   },
   filename: function (req, file, cb) {
     // console.log(req.file, "multer1");
