@@ -13,7 +13,7 @@ router.get("/holidays", (req, res) => {
 });
 
 // Route to notify employees about the holiday
-router.post("/notify-holiday", async (req, res) => {
+router.post("/notifyHoliday", async (req, res) => {
     const { holidayName, holidayDate, isConfirmed } = req.body;
 
     try {
