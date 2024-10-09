@@ -15,13 +15,13 @@ jobs:
 
     - name: Copy PEM file to runner
       run: |
-        echo "${{ secrets.EC2_PEM_KEY }}" > CrmBackend.pem
+        echo "${{ secrets.CRMBACKEND }}" > CrmBackend.pem
         chmod 400 CrmBackend.pem
 
     - name: Deploy to EC2
       run: |
-        ssh -i CrmBackend.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cd /path/to/your/project
+        ssh -i "CrmBackend.pem" ubuntu@ec2-16-16-246-83.eu-north-1.compute.amazonaws.com
+          cd Pizeonfly_crm/
           git pull origin main
           pm2 restart all
         EOF
