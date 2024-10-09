@@ -1,0 +1,27 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master  # Apni branch specify karein jo deploy karni hai
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Copy PEM file to runner
+      run: |
+        echo "${{ secrets.EC2_PEM_KEY }}" > CrmBackend.pem
+        chmod 400 CrmBackend.pem
+
+    - name: Deploy to EC2
+      run: |
+        ssh -i CrmBackend.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cd /path/to/your/project
+          git pull origin main
+          pm2 restart all
+        EOF
