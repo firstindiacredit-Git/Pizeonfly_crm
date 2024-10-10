@@ -143,10 +143,12 @@ router.get("/search", async (req, res) => {
 // Update an employee
 router.put('/employees/:employeeId', uploadEmployee.single("employeeImage"), async (req, res) => {
     try {
-        // Use req.file for image upload if it exists
         const updatedData = req.body;
         if (req.file) {
-            updatedData.employeeImage = req.file.location; // Assuming path of the image is saved
+            // Update the path similar to the creation logic
+            const path = req.file?.path;
+            let newPath = path?.replace('uploads\\', ""); // Replace as per your path logic
+            updatedData.employeeImage = newPath;
         }
 
         const updatedEmployee = await Employee.findByIdAndUpdate(req.params.employeeId, updatedData, { new: true });
@@ -158,6 +160,7 @@ router.put('/employees/:employeeId', uploadEmployee.single("employeeImage"), asy
         res.status(400).json({ message: err.message });
     }
 });
+
 
 
 // Delete an employee
