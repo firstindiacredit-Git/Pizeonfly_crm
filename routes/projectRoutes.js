@@ -13,5 +13,7 @@ router.delete('/projects/:projectId', projectController.deleteProject);
 router.get('/auth', projectController.getProject)
 router.get('/auth-task', projectController.getProjecttask)
 router.get('/totalProjects', projectController.getTotalProjects);
+router.get('/client-projects', projectController.getProjectForClient);
+
 
 module.exports = router;

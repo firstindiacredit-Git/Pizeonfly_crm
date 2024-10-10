@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-
 const projectSchema = new mongoose.Schema({
     projectName: {
         type: String,
@@ -28,6 +27,10 @@ const projectSchema = new mongoose.Schema({
     taskAssignPerson: [{
         type: Schema.Types.ObjectId,
         ref: 'Employee'
+    }],
+    clientAssignPerson: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Client'
     }],
     description: {
         type: String

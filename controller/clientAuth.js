@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Client = require('../model/clientModel');
+const nodemailer = require('nodemailer');
 const { uploadClient } = require('../utils/multerConfig');
+const jwt = require('jsonwebtoken');
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 // Total Clients
 router.get('/totalClients', async (req, res) => {
@@ -15,27 +20,6 @@ router.get('/totalClients', async (req, res) => {
 
 
 // Create a new client
-// router.post('/clients', uploadClient.single("clientImage"), async (req, res) => {
-//   try {
-//     const path = req.file?.path;
-//     // let newPath = path?.replace('uploads\\', "");
-//     if (path === undefined || path === null) {
-//       path = "./uploads/default.jpeg";
-//     }
-//     req.body.clientImage = path;
-//     const client = new Client(req.body);
-//     await client.save();
-//     res.status(201).send(client);
-//   } catch (error) {
-//     if (error.name === 'ValidationError') {
-//       const errors = Object.values(error.errors).map(err => err.message);
-//       res.status(400).send({ errors });
-//     } else {
-//       res.status(500).send(error);
-//     }
-//   }
-// });
-
 router.post('/clients', uploadClient.single("clientImage"), async (req, res) => {
   try {
     const path = req.file?.path;
@@ -46,6 +30,8 @@ router.post('/clients', uploadClient.single("clientImage"), async (req, res) => 
     req.body.clientImage = newPath;
     const client = new Client(req.body);
     await client.save();
+    // Send email after saving client
+    sendEmail(client);
     res.status(201).send(client);
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -54,6 +40,62 @@ router.post('/clients', uploadClient.single("clientImage"), async (req, res) => 
     } else {
       res.status(500).send(error);
     }
+  }
+});
+// Email sending function
+async function sendEmail(client) {
+  // Configure Nodemailer with your email service (for example, Gmail)
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.USER_EMAIL,
+      pass: process.env.USER_PASSWORD  // your Gmail password or app password
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.USER_EMAIL,
+    to: client.clientEmail, // Send email to the client's email address
+    subject: 'Your Account Details',
+    text: `Hello ${client.clientName},\n\nYou have been added as a Client at PIZEONFLY. Here are your details:\n\nEmail: ${client.clientEmail}\nPassword: ${client.clientPassword}\n\nClicke here to login\n\nIf any query Please Contact MD-Afzal - 9015662728\n\nThank you for choosing our service!`,
+  };
+
+  // Send the email
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${client.clientEmail}`);
+  } catch (error) {
+    console.error('Error sending email:', error);
+  }
+}
+// Client login
+router.post("/clientlogin", async (req, res) => {
+  const { clientEmail, clientPassword } = req.body;
+
+  if (!clientEmail || !clientPassword) {
+    return res.status(400).json({ message: "Email and password are required." });
+  }
+
+  try {
+    const clientDetails = await Client.findOne({
+      clientEmail: clientEmail, // Correct field name
+      clientPassword: clientPassword // Correct field name
+    }).lean();
+
+    if (!clientDetails) {
+      return res.status(400).json({ message: "User not found or invalid credentials." });
+    }
+
+    const token = jwt.sign({ _id: clientDetails._id }, process.env.JWT_SECRET, { expiresIn: '10d' });
+
+    return res.status(200).json({
+      message: "Login success",
+      user: clientDetails,
+      token: token
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error." });
   }
 });
 
@@ -108,8 +150,9 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// Update a client by ID
-router.put('/clients/:id', async (req, res) => {
+
+// Update a client by ID (with file handling)
+router.put('/clients/:id', uploadClient.single("clientImage"), async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ['clientName', 'businessName', 'clientImage', 'clientEmail', 'clientPassword', 'clientPhone', 'clientAddress', 'clientGst'];
   const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
@@ -125,12 +168,19 @@ router.put('/clients/:id', async (req, res) => {
       return res.status(404).send({ error: 'Client not found' });
     }
 
+    // Handle image update
+    const path = req.file?.path;
+    if (path) {
+      let newPath = path.replace('uploads\\', "");
+      req.body.clientImage = newPath;
+    }
+
     updates.forEach((update) => client[update] = req.body[update]);
 
     await client.save();
     res.status(200).send(client);
   } catch (error) {
-    console.error('Error during client update:', error); // Logging error
+    console.error('Error during client update:', error);
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
       res.status(400).send({ errors });

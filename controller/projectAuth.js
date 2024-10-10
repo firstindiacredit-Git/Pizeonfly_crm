@@ -16,52 +16,28 @@ exports.getTotalProjects = async (req, res) => {
 };
 
 // Create a new project
-// exports.createProject = async (req, res) => {
-//     try {
-//         // console.log(req.file);
-//         // const path = req.file?.path;
-//         const paths = req.files?.map(file => file.location);
-//         // console.log(path);
-//         // const newPath = path?.replace('uploads\\', "");
-//         // const newPaths = paths?.map(path => path.replace('uploads\\', ""));
-
-//         // console.log(req.body, 'body');
-//         const taskAssigner = req.body.taskAssignPerson;
-//         // console.log(taskAssigner, 'taskassigner')
-//         const filteredTaskAssigner = taskAssigner.filter((task) => task !== "");
-//         // console.log(filteredTaskAssigner);
-
-//         // console.log(req.body.projectImage);
-//         req.body.projectImage = paths;
-//         // console.log(req.body, "body");
-//         const project = new Project({ ...req.body, taskAssignPerson: filteredTaskAssigner });
-//         // console.log(project, "project");
-//         const savedProject = await project.save();
-//         res.status(201).json(savedProject);
-//     } catch (err) {
-//         res.status(400).json({ message: err.message });
-//     }
-// };
 exports.createProject = async (req, res) => {
     try {
-        // console.log(req.file);
-        // const path = req.file?.path;
+        // Process project images
         const paths = req.files?.map(file => file.path);
-        // console.log(path);
-        // const newPath = path?.replace('uploads\\', "");
         const newPaths = paths?.map(path => path.replace('uploads\\', ""));
 
-        // console.log(req.body, 'body');
-        const taskAssigner = req.body.taskAssignPerson;
-        // console.log(taskAssigner, 'taskassigner')
-        const filteredTaskAssigner = taskAssigner.filter((task) => task !== "");
-        // console.log(filteredTaskAssigner);
+        // Filter taskAssignPerson to remove empty values
+        const taskAssigner = req.body.taskAssignPerson || [];
+        const filteredTaskAssigner = taskAssigner.filter(task => task !== "");
 
-        // console.log(req.body.projectImage);
-        req.body.projectImage = newPaths;
-        // console.log(req.body, "body");
-        const project = new Project({ ...req.body, taskAssignPerson: filteredTaskAssigner });
-        // console.log(project, "project");
+        // Filter clientAssignPerson to remove empty values
+        const clientAssigner = req.body.clientAssignPerson || [];
+        const filteredClientAssigner = clientAssigner.filter(client => client !== "");
+
+        // Assign valid data to the project
+        const project = new Project({
+            ...req.body,
+            projectImage: newPaths,
+            taskAssignPerson: filteredTaskAssigner,
+            clientAssignPerson: filteredClientAssigner, // Handle multiple clients
+        });
+
         const savedProject = await project.save();
         res.status(201).json(savedProject);
     } catch (err) {
@@ -69,11 +45,12 @@ exports.createProject = async (req, res) => {
     }
 };
 
+
 // Get all projects
 exports.getAllProjects = async (req, res) => {
     try {
         // Fetch all projects and task assignment in a single query
-        const projects = await Project.find().populate("taskAssignPerson");
+        const projects = await Project.find().populate("taskAssignPerson").populate("clientAssignPerson");
 
         // Fetch all tasks in a single query for efficiency
         const allTasks = await Task.find();
@@ -82,10 +59,10 @@ exports.getAllProjects = async (req, res) => {
         const updatedProjects = projects.map(project => {
             // Filter tasks that belong to the current project
             const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
-            
+
             const totalTasks = projectTasks.length;
             const completedTaskNum = projectTasks.filter(task => task.isCompleted).length;
-            
+
             const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
             const status = percent === "100.00" ? "Completed" : "In Progress";
 
@@ -102,7 +79,6 @@ exports.getAllProjects = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
 
 // Get a single project by projectId
 exports.getProjectById = async (req, res) => {
@@ -196,3 +172,36 @@ exports.getProjecttask = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+// Get projects assigned to a client (based on token)
+exports.getProjectForClient = async (req, res) => {
+    const auth = req.headers.authorization;
+
+    if (!auth || !auth.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "Authorization token is required" });
+    }
+
+    const token = auth.split(' ')[1];  // Extract the token
+    const decodedToken = jwt.decode(token);  // Decode the token
+
+    // console.log("Decoded Token:", decodedToken);  // Debugging log
+
+    if (!decodedToken || !decodedToken._id) {
+        return res.status(400).json({ message: "Invalid token or missing client ID" });
+    }
+
+    try {
+        const projects = await Project.find({
+            clientAssignPerson: decodedToken._id
+        }).populate("clientAssignPerson");
+
+        if (!projects || projects.length === 0) {
+            return res.status(404).json({ message: 'No projects found for this client' });
+        }
+
+        res.json(projects);
+    } catch (err) {
+        console.error(err);  // Log the error for debugging
+        return res.status(500).json({ message: "Internal server error", error: err.message });
+    }
+};
+

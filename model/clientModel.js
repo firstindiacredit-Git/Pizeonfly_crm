@@ -4,7 +4,6 @@ const Schema = mongoose.Schema;
 const clientSchema = new Schema({
   clientName: {
     type: String,
-    // required: true,
   },
 
   businessName: {
@@ -22,24 +21,21 @@ const clientSchema = new Schema({
     unique: true
   },
 
-  clientPassword: { // Ensure this field name matches the request body
+  clientPassword: {
     type: String,
     required: true,
   },
 
   clientPhone: {
     type: String,
-    // required: true,
   },
 
   clientAddress: {
     type: String,
-    // required: true,
   },
   
   clientGst: {
     type: String,
-    // required: true,
   }
 }, {
   timestamps: true
