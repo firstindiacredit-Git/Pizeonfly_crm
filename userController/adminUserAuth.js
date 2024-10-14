@@ -38,7 +38,7 @@ exports.loginUser = async (req, res) => {
     if (user) {
       const match = await bcrypt.compare(password, user.password);
       if (match && user.role.toString() === role) {
-        const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET);
         res.json({ token, user, userIp });
       } else {
         res.status(401).json('Incorrect email, password, or role');

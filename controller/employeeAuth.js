@@ -85,7 +85,7 @@ router.post("/employeelogin", async (req, res) => {
 
         // console.log(empDetails._id.toString())
         // const token = jwt.sign(empDetails._id.toString(), process.env.JWT_SECRET);
-        const token = jwt.sign({ _id: empDetails._id }, process.env.JWT_SECRET, { expiresIn: '10d' });
+        const token = jwt.sign({ _id: empDetails._id }, process.env.JWT_SECRET);
 
         return res.status(200).send({
             status: 200,
