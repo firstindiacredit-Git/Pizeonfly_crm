@@ -48,9 +48,9 @@ connection.once('open', () => {
 });
 
 
-// app.get("/", (req, res) => {
-//   res.send("Hello World");
-// });
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 
 //Route setup
 app.use("/api", clientRoutes);
