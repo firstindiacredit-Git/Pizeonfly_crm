@@ -12,6 +12,16 @@ router.post('/projectMessage', uploadMessage.array('files', 5), async (req, res)
   try {
     const message = new Message({ content, senderId, projectId, fileUrls });
     await message.save();
+    
+    // Emit socket event for new message
+    req.app.get('io').to(projectId).emit('new message', message);
+    
+    // Emit socket event for new notification
+    req.app.get('io').to(projectId).emit('new notification', {
+      projectId,
+      message: `New message from ${senderId} in project ${projectId}`
+    });
+    
     res.status(201).json(message);
   } catch (error) {
     res.status(500).json({ message: 'Error creating message', error });

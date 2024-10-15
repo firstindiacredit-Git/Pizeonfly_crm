@@ -11,7 +11,8 @@ const projectMessage = require("./controller/projectMessage");
 const taskMessage = require("./controller/taskMessage");
 const clientRoutes = require("./controller/clientAuth");
 const holidayController = require("./controller/holidayAuth");
-
+const http = require('http');
+const { Server } = require("socket.io");
 
 const cors = require("cors");
 const path = require("path");
@@ -48,6 +49,39 @@ connection.once('open', () => {
   console.log('MongoDB database connected');
 });
 
+// Create HTTP server
+const server = http.createServer(app);
+
+// Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Be more specific in production
+    methods: ["GET", "POST"]
+  }
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  // Handle joining a project room
+  socket.on('join project', (projectId) => {
+    socket.join(projectId);
+  });
+
+  // Handle new message
+  socket.on('new message', (data) => {
+    io.to(data.projectId).emit('new message', data);
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
+});
+
+// Make io accessible to our router
+app.set('io', io);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
@@ -69,6 +103,6 @@ app.get('*', (req, res) => {
 
 //Port setup
 const port = process.env.PORT || 4000;
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });
