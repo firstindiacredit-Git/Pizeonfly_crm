@@ -64,9 +64,10 @@ const messageStorage = multer.diskStorage({
   }
 });
 
-const uploadEmployee = multer({ 
+const uploadEmployee = multer({
   storage: employeeStorage,
-  fileFilter: fileFilter // Apply the file filter  
+  fileFilter: fileFilter, // Apply the file filter  
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
 const uploadProject = multer({
@@ -78,13 +79,13 @@ const uploadTask = multer({
   storage: taskStorage,
   fileFilter: fileFilter // Apply the file filter 
 });
-const uploadClient = multer({ 
+const uploadClient = multer({
   storage: clientStorage,
   fileFilter: fileFilter // Apply the file filter 
 });
-const uploadMessage = multer({ 
+const uploadMessage = multer({
   storage: messageStorage,
   fileFilter: fileFilter // Apply the file filter 
 });
 
-module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage}
+module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage }
