@@ -250,18 +250,34 @@ exports.deleteTaskById = async (req, res) => {
 
 //Get task by Task Assigne Person (token)
 exports.getTask = async (req, res) => {
-  const author = req.headers.authorization
-  const decodeToken = jwt.decode(author)
-  // console.log(decodeToken);
+  const author = req.headers.authorization;
+  const decodeToken = jwt.decode(author);
+
   try {
-    const task = await Task.find({
+    const tasks = await Task.find({
       taskAssignPerson: {
         $in: [decodeToken]
       }
     }).populate("taskAssignPerson");
-    // console.log(task);
-    res.json(task)
-    return task;
+
+    // Count tasks by status
+    const taskStatusCount = {
+      completed: 0,
+      inProgress: 0,
+      notStarted: 0
+    };
+
+    tasks.forEach(task => {
+      if (task.isCompleted) {
+        taskStatusCount.completed++;
+      } else if (task.taskStatus === 'In Progress') {
+        taskStatusCount.inProgress++;
+      } else {
+        taskStatusCount.notStarted++;
+      }
+    });
+
+    res.json({ tasks, taskStatusCount });
   } catch (err) {
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -285,27 +301,26 @@ exports.updateTaskStatus = async (req, res) => {
   }
 };
 
-// Get tasks summary by employee
-exports.getTasksSummaryByEmployee = async (req, res) => {
-  try {
-    const employees = await Employee.find();
-    const tasksSummary = await Promise.all(
-      employees.map(async (employee) => {
-        const totalTasks = await Task.countDocuments({ taskAssignPerson: employee._id });
-        const completedTasks = await Task.countDocuments({ taskAssignPerson: employee._id, taskStatus: 'Completed' });
-        const remainingTasks = totalTasks - completedTasks;
+// Get total tasks by Task Assignee Person (token)
+exports.getTotalTasksByAssignee = async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ message: "Authorization token is required" });
+  }
 
-        return {
-          employeeId: employee.employeeId,
-          employeeName: employee.employeeName,
-          totalTasks,
-          completedTasks,
-          remainingTasks,
-        };
-      })
-    );
-    res.json(tasksSummary);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  const token = auth.split(' ')[1];
+  const decodedToken = jwt.decode(token);
+
+  if (!decodedToken || !decodedToken._id) {
+    return res.status(400).json({ message: "Invalid token or missing user ID" });
+  }
+
+  try {
+    const totalTasks = await Task.countDocuments({
+      taskAssignPerson: decodedToken._id
+    });
+    res.json({ totalTasks });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

@@ -205,3 +205,54 @@ exports.getProjectForClient = async (req, res) => {
     }
 };
 
+// Total projects by Task Assignee Person (token)
+exports.getTotalProjectsByAssignee = async (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "Authorization token is required" });
+    }
+
+    const token = auth.split(' ')[1];
+    const decodedToken = jwt.decode(token);
+
+    if (!decodedToken || !decodedToken._id) {
+        return res.status(400).json({ message: "Invalid token or missing user ID" });
+    }
+
+    try {
+        const totalProjects = await Project.countDocuments({
+            taskAssignPerson: decodedToken._id
+        });
+        res.json({ totalProjects });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Add this new function to the exports
+exports.getProjectStatusCounts = async (req, res) => {
+    try {
+        const projects = await Project.find();
+        const allTasks = await Task.find();
+
+        let completedCount = 0;
+        let inProgressCount = 0;
+
+        projects.forEach(project => {
+            const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
+            const totalTasks = projectTasks.length;
+            const completedTaskNum = projectTasks.filter(task => task.isCompleted).length;
+            const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
+            
+            if (percent === "100.00") {
+                completedCount++;
+            } else {
+                inProgressCount++;
+            }
+        });
+
+        res.json({ completed: completedCount, inProgress: inProgressCount });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

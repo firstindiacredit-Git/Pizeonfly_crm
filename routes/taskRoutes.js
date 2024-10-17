@@ -17,7 +17,7 @@ router.get('/author', taskController.getTask)
 
 router.put('/update/:id', taskController.updateTaskStatus)
 
-router.get('/tasks-summary', taskController.getTasksSummaryByEmployee);
-
+// New route for total tasks by assignee
+router.get('/totalAssigneeTasks', taskController.getTotalTasksByAssignee);
 
 module.exports = router;
