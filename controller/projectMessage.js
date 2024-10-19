@@ -7,7 +7,7 @@ const router = express.Router();
 // Create a message
 router.post('/projectMessage', uploadMessage.array('files', 5), async (req, res) => { // Limit to 5 files
   const { content, senderId, projectId } = req.body;
-  const fileUrls = req.files ? req.files.map(file => file.location) : []; // Get URLs of uploaded files
+  const fileUrls = req.files ? req.files.map(file => `/uploads/message/${file.filename}`) : []; // Get URLs of uploaded files
 
   try {
     const message = new Message({ content, senderId, projectId, fileUrls });

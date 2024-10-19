@@ -62,21 +62,31 @@ const io = new Server(server, {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('A user connected');
+  // console.log('A user connected');
 
   // Handle joining a project room
   socket.on('join project', (projectId) => {
     socket.join(projectId);
   });
 
-  // Handle new message
+  // Handle joining a task room
+  socket.on('join task', (taskId) => {
+    socket.join(taskId);
+  });
+
+  // Handle new project message
   socket.on('new message', (data) => {
     io.to(data.projectId).emit('new message', data);
   });
 
+  // Handle new task message
+  socket.on('new task message', (data) => {
+    io.to(data.taskId).emit('new task message', data);
+  });
+
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log('User disconnected');
+    // console.log('User disconnected');
   });
 });
 
