@@ -56,8 +56,18 @@ async function sendEmail(client) {
   const mailOptions = {
     from: process.env.USER_EMAIL,
     to: client.clientEmail, // Send email to the client's email address
-    subject: 'Your Account Details',
-    text: `Hello ${client.clientName},\n\nYou have been added as a Client at PIZEONFLY. Here are your details:\n\nEmail: ${client.clientEmail}\nPassword: ${client.clientPassword}\n\nClicke here to login\n\nIf any query Please Contact MD-Afzal - 9015662728\n\nThank you for choosing our service!`,
+    subject: 'PIZEONFLY - Your Account Details',
+    html: `
+            <h1>Hello ${client.clientName},</h1>
+            <p>You have been added as an Employee at PIZEONFLY. Here are your details:</p>
+            <ul>
+                <li><strong>Email:</strong> ${client.clientEmail}</li>
+                <li><strong>Password:</strong> ${client.clientPassword}</li>
+            </ul>
+            <p><a href="https://crm.pizeonfly.com/#/clientsignin">Click here to login</a></p>
+            <p>If you have any queries, please contact MD-Afzal at 9015662728</p>
+            <p>Thank you for choosing our service!</p>
+        `,
   };
 
   // Send the email

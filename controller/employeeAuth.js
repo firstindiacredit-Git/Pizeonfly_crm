@@ -3,6 +3,10 @@ const router = express.Router();
 const Employee = require('../model/employeeModel');
 const { uploadEmployee } = require('../utils/multerConfig');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 //Total Employee
 router.get('/totalEmployees', async (req, res) => {
@@ -47,12 +51,51 @@ router.post('/employees', uploadEmployee.single("employeeImage"), async (req, re
         req.body.employeeImage = newPath;
         const employee = new Employee(req.body);
         const savedEmployee = await employee.save();
+        sendEmail(savedEmployee);
         res.status(201).json(savedEmployee);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
+// Email sending function
+async function sendEmail(employee) {
+    // Configure Nodemailer with your email service (for example, Gmail)
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.USER_EMAIL,
+            pass: process.env.USER_PASSWORD
+        },
+    });
+
+    const mailOptions = {
+        from: process.env.USER_EMAIL,
+        to: employee.emailid, // Send email to the employee's email address
+        subject: 'PIZEONFLY - Your Account Details',
+        html: `
+            <h1>Hello ${employee.employeeName},</h1>
+            <p>You have been added as an Employee at PIZEONFLY. Here are your details:</p>
+            <ul>
+                <li><strong>Email:</strong> ${employee.emailid}</li>
+                <li><strong>Password:</strong> ${employee.password}</li>
+            </ul>
+            <p><a href="https://crm.pizeonfly.com/#/employeesignin">Click here to login</a></p>
+            <p>If you have any queries, please contact MD-Afzal at 9015662728</p>
+            <p>Thank you for choosing our service!</p>
+        `,
+    };
+    // Send the email
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Email sent to ${employee.emailid}`);
+    } catch (error) {
+        console.error('Error sending email:', error);
+    }
+}
+
+
+//employee login
 router.post("/employeelogin", async (req, res) => {
     const body = req.body;
     if (!body) {
