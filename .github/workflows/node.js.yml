@@ -28,5 +28,5 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: |
-    touch .env
-    echo "${{secrets.CRM_ENV_FILE}}" > .env
+        touch .env
+        echo "${{secrets.CRM_ENV_FILE}}" > .env
