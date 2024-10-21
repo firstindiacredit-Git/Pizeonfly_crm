@@ -16,14 +16,21 @@ const fileFilter = (req, file, cb) => {
 
 const employeeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './uploads/employee')
+    let uploadPath = './uploads/employee';
+    if (file.fieldname === 'resume') {
+      uploadPath = './uploads/employee/resumes';
+    } else if (file.fieldname === 'aadhaarCard') {
+      uploadPath = './uploads/employee/aadhaar';
+    } else if (file.fieldname === 'panCard') {
+      uploadPath = './uploads/employee/pan';
+    }
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    // console.log(req.file, "multer1");
-    const uniqueSuffix = Date.now() + '-' + file.originalname
-    cb(null, file.fieldname + '-' + uniqueSuffix)
+    const uniqueSuffix = Date.now() + '-' + file.originalname;
+    cb(null, file.fieldname + '-' + uniqueSuffix);
   }
-})
+});
 
 const projectStorage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -54,6 +61,7 @@ const clientStorage = multer.diskStorage({
     cb(null, file.fieldname + '-' + uniqueSuffix);
   }
 });
+
 const messageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './uploads/message');
@@ -66,26 +74,32 @@ const messageStorage = multer.diskStorage({
 
 const uploadEmployee = multer({
   storage: employeeStorage,
-  fileFilter: fileFilter, // Apply the file filter  
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  fileFilter: fileFilter,
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
 
 const uploadProject = multer({
   storage: projectStorage,
-  fileFilter: fileFilter // Apply the file filter
+  fileFilter: fileFilter, // Apply the file filter
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
 
 const uploadTask = multer({
   storage: taskStorage,
-  fileFilter: fileFilter // Apply the file filter 
+  fileFilter: fileFilter, // Apply the file filter 
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
+
 const uploadClient = multer({
   storage: clientStorage,
-  fileFilter: fileFilter // Apply the file filter 
+  fileFilter: fileFilter, // Apply the file filter 
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
+
 const uploadMessage = multer({
   storage: messageStorage,
-  fileFilter: fileFilter // Apply the file filter 
+  fileFilter: fileFilter, // Apply the file filter 
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
 
 module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage }

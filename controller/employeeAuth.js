@@ -38,18 +38,36 @@ router.get('/totalEmployees', async (req, res) => {
 //         res.status(400).json({ message: err.message });
 //     }
 // });
-router.post('/employees', uploadEmployee.single("employeeImage"), async (req, res) => {
+const upload = uploadEmployee.fields([
+  { name: 'employeeImage', maxCount: 1 },
+  { name: 'resume', maxCount: 2  },
+  { name: 'aadhaarCard', maxCount: 2 },
+  { name: 'panCard', maxCount: 2 }
+]);
+
+router.post('/employees', upload, async (req, res) => {
     try {
-        // console.log(req.file);
-        const path = req.file?.path;
-        // console.log(path); 
-        let newPath = path?.replace('uploads\\', "");
-        if (newPath === undefined || newPath === null) {
-            newPath = "default.jpeg"
+        const files = req.files;
+        const employeeData = req.body;
+
+        if (files.employeeImage) {
+            let newPath = files.employeeImage[0].path.replace('uploads\\', "");
+            employeeData.employeeImage = newPath;
+        } else {
+            employeeData.employeeImage = "default.jpeg";
         }
-        // console.log(newPath);
-        req.body.employeeImage = newPath;
-        const employee = new Employee(req.body);
+
+        if (files.resume) {
+            employeeData.resume = files.resume[0].path.replace('uploads\\', "");
+        }
+        if (files.aadhaarCard) {
+            employeeData.aadhaarCard = files.aadhaarCard[0].path.replace('uploads\\', "");
+        }
+        if (files.panCard) {
+            employeeData.panCard = files.panCard[0].path.replace('uploads\\', "");
+        }
+
+        const employee = new Employee(employeeData);
         const savedEmployee = await employee.save();
         sendEmail(savedEmployee);
         res.status(201).json(savedEmployee);
@@ -184,14 +202,22 @@ router.get("/search", async (req, res) => {
 })
 
 // Update an employee
-router.put('/employees/:employeeId', uploadEmployee.single("employeeImage"), async (req, res) => {
+router.put('/employees/:employeeId', upload, async (req, res) => {
     try {
+        const files = req.files;
         const updatedData = req.body;
-        if (req.file) {
-            // Update the path similar to the creation logic
-            const path = req.file?.path;
-            let newPath = path?.replace('uploads\\', ""); // Replace as per your path logic
-            updatedData.employeeImage = newPath;
+
+        if (files.employeeImage) {
+            updatedData.employeeImage = files.employeeImage[0].path.replace('uploads\\', "");
+        }
+        if (files.resume) {
+            updatedData.resume = files.resume[0].path.replace('uploads\\', "");
+        }
+        if (files.aadhaarCard) {
+            updatedData.aadhaarCard = files.aadhaarCard[0].path.replace('uploads\\', "");
+        }
+        if (files.panCard) {
+            updatedData.panCard = files.panCard[0].path.replace('uploads\\', "");
         }
 
         const updatedEmployee = await Employee.findByIdAndUpdate(req.params.employeeId, updatedData, { new: true });

@@ -13,6 +13,15 @@ const employeeSchema = new Schema({
         type: String,
         required: true
     },
+    resume: {
+        type: String,
+    },
+    aadhaarCard: {
+        type: String,
+    },
+    panCard: {
+        type: String,
+    },
     employeeId: {
         type: String,
     },
