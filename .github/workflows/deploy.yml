@@ -16,7 +16,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3  # Updated to v3
       with:
-        node-version: '20'  # Ya '20', depending on your Node.js version
+        node-version: '20' 
 
     - name: Copy files via SSH
       uses: appleboy/scp-action@v0.1.2
