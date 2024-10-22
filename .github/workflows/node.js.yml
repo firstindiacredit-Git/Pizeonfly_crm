@@ -25,6 +25,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
+    - run: npm run build --if-present
+    - run: pm2 restart all
     - run: |
         touch .env
         echo "${{secrets.CRM_ENV_FILE}}" > .env
