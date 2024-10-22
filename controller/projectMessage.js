@@ -5,9 +5,9 @@ const { uploadMessage } = require('../utils/multerConfig');
 const router = express.Router();
 
 // Create a message
-router.post('/projectMessage', uploadMessage.array('files', 5), async (req, res) => { // Limit to 5 files
+router.post('/projectMessage', uploadMessage.array('files', 5), async (req, res) => {
   const { content, senderId, projectId } = req.body;
-  const fileUrls = req.files ? req.files.map(file => `/uploads/message/${file.filename}`) : []; // Get URLs of uploaded files
+  const fileUrls = req.files ? req.files.map(file => `/uploads/message/${file.filename}`) : [];
 
   try {
     const message = new Message({ content, senderId, projectId, fileUrls });
@@ -24,7 +24,8 @@ router.post('/projectMessage', uploadMessage.array('files', 5), async (req, res)
     
     res.status(201).json(message);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating message', error });
+    console.error('Error creating message:', error);
+    res.status(500).json({ message: 'Error creating message', error: error.message });
   }
 });
 

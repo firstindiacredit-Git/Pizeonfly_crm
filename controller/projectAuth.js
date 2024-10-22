@@ -112,15 +112,41 @@ exports.searchProjects = async (req, res) => {
 // Update a project
 exports.updateProject = async (req, res) => {
     try {
-        // console.log(req.body);
-        req.body.projectImage = req.file?.path;
-        const updatedProject = await Project.findByIdAndUpdate(req.params.projectId, req.body, { new: true });
+        const updateData = { ...req.body };
+
+        // Handle project image
+        if (req.files && req.files.length > 0) {
+            const paths = req.files.map(file => file.path);
+            const newPaths = paths.map(path => path.replace('uploads\\', ""));
+            updateData.projectImage = newPaths;
+        }
+
+        // Handle taskAssignPerson
+        if (updateData.taskAssignPerson) {
+            updateData.taskAssignPerson = Array.isArray(updateData.taskAssignPerson) 
+                ? updateData.taskAssignPerson.filter(id => id && id !== 'undefined')
+                : [updateData.taskAssignPerson].filter(id => id && id !== 'undefined');
+        }
+
+        // Handle clientAssignPerson
+        if (updateData.clientAssignPerson) {
+            updateData.clientAssignPerson = Array.isArray(updateData.clientAssignPerson)
+                ? updateData.clientAssignPerson.filter(id => id && id !== 'undefined')
+                : [updateData.clientAssignPerson].filter(id => id && id !== 'undefined');
+        }
+
+        const updatedProject = await Project.findByIdAndUpdate(
+            req.params.projectId, 
+            updateData, 
+            { new: true, runValidators: true }
+        );
 
         if (!updatedProject) {
             return res.status(404).json({ message: 'Project not found' });
         }
         res.json(updatedProject);
     } catch (err) {
+        console.error('Error updating project:', err);
         res.status(400).json({ message: err.message });
     }
 };
@@ -140,21 +166,39 @@ exports.deleteProject = async (req, res) => {
 
 //Get project by Task Assigne Person (token)
 exports.getProject = async (req, res) => {
-
     const auth = req.headers.authorization
     const decodedToken = jwt.decode(auth)
     try {
-        const project = await Project.find({
+        const projects = await Project.find({
             taskAssignPerson: {
                 $in: [decodedToken]
             }
         }).populate("taskAssignPerson");
-        res.json(project)
-        return project;
+
+        // Fetch all tasks in a single query for efficiency
+        const allTasks = await Task.find();
+
+        // Calculate progress and status for each project
+        const updatedProjects = projects.map(project => {
+            const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
+            const totalTasks = projectTasks.length;
+            const completedTaskNum = projectTasks.filter(task => task.isCompleted).length;
+            const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
+            const status = percent === "100.00" ? "Completed" : "In Progress";
+
+            return {
+                ...project._doc,
+                progress: percent,
+                status: status
+            };
+        });
+
+        res.json(updatedProjects);
     } catch (err) {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+
 //Get project by Task (token)
 exports.getProjecttask = async (req, res) => {
 
@@ -180,10 +224,8 @@ exports.getProjectForClient = async (req, res) => {
         return res.status(401).json({ message: "Authorization token is required" });
     }
 
-    const token = auth.split(' ')[1];  // Extract the token
-    const decodedToken = jwt.decode(token);  // Decode the token
-
-    // console.log("Decoded Token:", decodedToken);  // Debugging log
+    const token = auth.split(' ')[1];
+    const decodedToken = jwt.decode(token);
 
     if (!decodedToken || !decodedToken._id) {
         return res.status(400).json({ message: "Invalid token or missing client ID" });
@@ -192,15 +234,33 @@ exports.getProjectForClient = async (req, res) => {
     try {
         const projects = await Project.find({
             clientAssignPerson: decodedToken._id
-        }).populate("clientAssignPerson");
+        }).populate("clientAssignPerson").populate("taskAssignPerson");
 
         if (!projects || projects.length === 0) {
             return res.status(404).json({ message: 'No projects found for this client' });
         }
 
-        res.json(projects);
+        // Fetch all tasks in a single query for efficiency
+        const allTasks = await Task.find();
+
+        // Calculate progress and status for each project
+        const updatedProjects = projects.map(project => {
+            const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
+            const totalTasks = projectTasks.length;
+            const completedTaskNum = projectTasks.filter(task => task.isCompleted).length;
+            const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
+            const status = percent === "100.00" ? "Completed" : "In Progress";
+
+            return {
+                ...project._doc,
+                progress: percent,
+                status: status
+            };
+        });
+
+        res.json(updatedProjects);
     } catch (err) {
-        console.error(err);  // Log the error for debugging
+        console.error(err);
         return res.status(500).json({ message: "Internal server error", error: err.message });
     }
 };
