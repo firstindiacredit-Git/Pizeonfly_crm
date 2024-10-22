@@ -5,14 +5,13 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  deploy:
 
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [20.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
@@ -31,10 +30,26 @@ jobs:
     # Build the project (if necessary)
     - run: npm run build --if-present
 
-    # Restart pm2 processes
-    - run: pm2 restart index.js
+    # SSH into the EC2 instance and deploy
+    - name: SSH and deploy
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ec2-16-16-246-83.eu-north-1.compute.amazonaws.com
+        username: ubuntu
+        key: ${{ secrets.SSH_PRIVATE_KEY }}  # Add your SSH private key to GitHub Secrets
+        script: |
+          cd ~/Pizeonfly_crm
+          git pull origin master
+          pm2 restart all
 
-    # Set environment variables
-    - run: |
-        touch .env
-        echo "${{secrets.CRM_ENV_FILE}}" > .env
+    # Set environment variables on the server
+    - name: Set environment variables
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ec2-16-16-246-83.eu-north-1.compute.amazonaws.com
+        username: ubuntu
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd ~/Pizeonfly_crm
+          touch .env
+          echo "${{ secrets.CRM_ENV_FILE }}" > .env
