@@ -35,8 +35,8 @@ jobs:
           git pull origin master
           pm2 restart all
 
-    # Set environment variables on the server
-    - name: Set environment variables
+    # Set environment variables on the server (only if .env doesn't already exist)
+    - name: Ensure .env file is not modified
       uses: appleboy/ssh-action@v0.1.7
       with:
         host: ec2-16-16-246-83.eu-north-1.compute.amazonaws.com
@@ -44,5 +44,9 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           cd ~/Pizeonfly_crm
-          touch .env
-          echo "${{ secrets.CRM_ENV_FILE }}" > .env
+          if [ ! -f ".env" ]; then
+            touch .env
+            echo "${{ secrets.CRM_ENV_FILE }}" > .env
+          else
+            echo ".env file already exists, skipping update."
+          fi

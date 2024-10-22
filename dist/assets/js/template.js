@@ -6,7 +6,8 @@ $(function () {
     "use strict";
 
     // main sidebar toggle js
-    $('.menu-toggle').on('click', function () {
+    $('.menu-toggle').on('click', function (e) {
+        e.preventDefault(); // Prevent default action
         $('.sidebar').toggleClass('open');
         $('.open').removeClass('sidebar-mini');
     });
@@ -120,6 +121,7 @@ var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
 // s1.setAttribute('crossorigin','*');
 // s0.parentNode.insertBefore(s1,s0);
 // })();
+
 
 
 
