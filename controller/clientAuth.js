@@ -179,13 +179,17 @@ router.put('/clients/:id', uploadClient.single("clientImage"), async (req, res) 
     }
 
     // Handle image update
-    const path = req.file?.path;
-    if (path) {
-      let newPath = path.replace('uploads\\', "");
-      req.body.clientImage = newPath;
+    if (req.file) {
+      const newPath = req.file.path.replace('uploads\\', "");
+      client.clientImage = newPath;
     }
 
-    updates.forEach((update) => client[update] = req.body[update]);
+    // Update other fields
+    updates.forEach((update) => {
+      if (update !== 'clientImage') {
+        client[update] = req.body[update];
+      }
+    });
 
     await client.save();
     res.status(200).send(client);
