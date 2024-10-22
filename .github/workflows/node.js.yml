@@ -32,7 +32,7 @@ jobs:
     - run: npm run build --if-present
 
     # Restart pm2 processes
-    - run: pm2 restart all
+    - run: pm2 restart CRM
 
     # Set environment variables
     - run: |
