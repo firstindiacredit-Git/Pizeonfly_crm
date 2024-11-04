@@ -83,7 +83,7 @@ exports.getAllProjects = async (req, res) => {
 // Get a single project by projectId
 exports.getProjectById = async (req, res) => {
     try {
-        const project = await Project.findById(req.params.projectId).populate('taskAssignPerson');
+        const project = await Project.findById(req.params.projectId).populate('taskAssignPerson').populate("clientAssignPerson");
         if (!project) {
             return res.status(404).json({ message: 'Project not found' });
         }
@@ -173,7 +173,7 @@ exports.getProject = async (req, res) => {
             taskAssignPerson: {
                 $in: [decodedToken]
             }
-        }).populate("taskAssignPerson");
+        }).populate("taskAssignPerson").populate("clientAssignPerson");
 
         // Fetch all tasks in a single query for efficiency
         const allTasks = await Task.find();
