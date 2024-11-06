@@ -11,6 +11,8 @@ const projectMessage = require("./controller/projectMessage");
 const taskMessage = require("./controller/taskMessage");
 const clientRoutes = require("./controller/clientAuth");
 const holidayController = require("./controller/holidayAuth");
+const urlController = require("./controller/urlShortner");
+const qrController = require("./controller/qrRoutes");
 const http = require('http');
 const { Server } = require("socket.io");
 
@@ -106,6 +108,8 @@ app.use("/api", taskMessage);
 app.use("/api", taskRoutes);
 app.use("/api", adminUserRoutes);
 app.use("/api", holidayController);
+app.use("/api", urlController);
+app.use("/api", qrController);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
