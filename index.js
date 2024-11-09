@@ -95,7 +95,7 @@ io.on('connection', (socket) => {
 // Make io accessible to our router
 app.set('io', io);
 
-app.get("/", (req, res) => {
+app.get("/hello", (req, res) => {
   res.send("Hello World");
 });
 
