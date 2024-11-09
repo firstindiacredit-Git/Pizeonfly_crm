@@ -7,7 +7,7 @@ const shortid = require('shortid');
 const QRCode = require('qrcode');
 
 // Get URLs for logged-in user
-router.get('/url', async (req, res) => {
+router.get('/api/url', async (req, res) => {
   try {
     const userId = req.headers['user-id']; // Get userId from request header
     if (!userId) {
@@ -22,7 +22,7 @@ router.get('/url', async (req, res) => {
 });
 
 // Create shortened URL with QR code
-router.post('/shorten', async (req, res) => {
+router.post('/api/shorten', async (req, res) => {
   try {
     const { title, original_url } = req.body;
     const userId = req.headers['user-id'];
@@ -54,23 +54,29 @@ router.post('/shorten', async (req, res) => {
   }
 });
 
-// Redirect route with `r/:shortCode` to handle server-side redirection
-router.get('/r/:shortCode', async (req, res) => {
+// Move the redirect route to handle root-level short URLs
+router.get('/:shortCode', async (req, res) => {
   try {
     const url = await Url.findOne({ short_url: req.params.shortCode });
 
     if (!url) {
       return res.status(404).json({ error: 'URL not found' });
     }
-    res.redirect(url.original_url);
+    
+    // Add http:// if the URL doesn't have a protocol
+    let redirectUrl = url.original_url;
+    if (!redirectUrl.startsWith('http://') && !redirectUrl.startsWith('https://')) {
+      redirectUrl = 'http://' + redirectUrl;
+    }
+    
+    res.redirect(redirectUrl);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-
 // Delete URL by short code
-router.delete('/:shortCode', async (req, res) => {
+router.delete('/api/:shortCode', async (req, res) => {
   try {
     const userId = req.headers['user-id'];
     if (!userId) {

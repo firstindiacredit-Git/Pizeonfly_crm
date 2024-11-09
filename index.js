@@ -108,8 +108,9 @@ app.use("/api", taskMessage);
 app.use("/api", taskRoutes);
 app.use("/api", adminUserRoutes);
 app.use("/api", holidayController);
-app.use("/api", urlController);
 app.use("/api", qrController);
+
+app.use("/", urlController);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
