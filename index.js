@@ -109,7 +109,6 @@ app.use("/api", taskRoutes);
 app.use("/api", adminUserRoutes);
 app.use("/api", holidayController);
 app.use("/api", qrController);
-
 app.use("/", urlController);
 
 app.get('*', (req, res) => {
