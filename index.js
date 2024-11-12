@@ -11,6 +11,7 @@ const projectMessage = require("./controller/projectMessage");
 const taskMessage = require("./controller/taskMessage");
 const clientRoutes = require("./controller/clientAuth");
 const holidayController = require("./controller/holidayAuth");
+const invoiceRoutes = require("./routes/invoiceRoutes");
 const urlController = require("./controller/urlShortner");
 const qrController = require("./controller/qrRoutes");
 const http = require('http');
@@ -108,6 +109,7 @@ app.use("/api", taskMessage);
 app.use("/api", taskRoutes);
 app.use("/api", adminUserRoutes);
 app.use("/api", holidayController);
+app.use("/api", invoiceRoutes);
 app.use("/api", qrController);
 app.use("/", urlController);
 
