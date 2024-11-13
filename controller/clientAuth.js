@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const { uploadClient } = require('../utils/multerConfig');
 const jwt = require('jsonwebtoken');
 const dotenv = require("dotenv");
+const Project = require('../model/projectModel');
 
 dotenv.config();
 
@@ -216,6 +217,29 @@ router.delete('/clients/:id', async (req, res) => {
     res.status(200).send({ message: 'Client deleted successfully', client });
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+// Update this route
+router.get('/totalClientProjects', async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const clientId = decoded._id;
+    
+    // console.log('Looking for projects with clientId:', clientId);
+    
+    // Update the query to match the field name used in your schema
+    const totalProjects = await Project.countDocuments({
+      clientAssignPerson: clientId
+    });
+    
+    // console.log('Total projects found:', totalProjects);
+    
+    res.json({ totalProjects });
+  } catch (err) {
+    console.error('Error in totalClientProjects:', err);
+    res.status(500).json({ message: err.message });
   }
 });
 
