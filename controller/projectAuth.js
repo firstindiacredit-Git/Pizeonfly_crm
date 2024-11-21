@@ -49,31 +49,34 @@ exports.createProject = async (req, res) => {
 // Get all projects
 exports.getAllProjects = async (req, res) => {
     try {
-        // Fetch all projects and task assignment in a single query
         const projects = await Project.find().populate("taskAssignPerson").populate("clientAssignPerson");
-
-        // Fetch all tasks in a single query for efficiency
         const allTasks = await Task.find();
 
-        // Prepare the updated projects array
         const updatedProjects = projects.map(project => {
-            // Filter tasks that belong to the current project
             const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
-
+            
+            // Count tasks by status
             const totalTasks = projectTasks.length;
-            const completedTaskNum = projectTasks.filter(task => task.isCompleted).length;
-
-            const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
+            const completedTasks = projectTasks.filter(task => task.isCompleted).length;
+            const inProgressTasks = projectTasks.filter(task => !task.isCompleted && task.taskStatus === 'In Progress').length;
+            const notStartedTasks = projectTasks.filter(task => !task.isCompleted && (!task.taskStatus || task.taskStatus === 'Not Started')).length;
+            
+            const percent = (completedTasks / totalTasks * 100 || 0).toFixed(2);
             const status = percent === "100.00" ? "Completed" : "In Progress";
 
             return {
                 ...project._doc,
                 progress: percent,
-                status: status
+                status: status,
+                totalTasks,
+                taskStats: {
+                    completed: completedTasks,
+                    inProgress: inProgressTasks,
+                    notStarted: notStartedTasks
+                }
             };
         });
 
-        // Send the updated projects as JSON response
         res.json(updatedProjects);
     } catch (err) {
         res.status(500).json({ message: err.message });

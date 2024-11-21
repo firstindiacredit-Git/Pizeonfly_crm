@@ -29,6 +29,21 @@ router.post('/clients', uploadClient.single("clientImage"), async (req, res) => 
       newPath = "default.jpeg";
     }
     req.body.clientImage = newPath;
+    
+    // Extract social links from request body
+    const socialLinks = {
+      linkedin: req.body.linkedin || '',
+      instagram: req.body.instagram || '',
+      youtube: req.body.youtube || '',
+      facebook: req.body.facebook || '',
+      pinterest: req.body.pinterest || '',
+      github: req.body.github || '',
+      website: req.body.website || '',
+      other: req.body.other || ''
+    };
+    
+    req.body.socialLinks = socialLinks;
+    
     const client = new Client(req.body);
     await client.save();
     // Send email after saving client
@@ -164,14 +179,6 @@ router.get("/search", async (req, res) => {
 
 // Update a client by ID (with file handling)
 router.put('/clients/:id', uploadClient.single("clientImage"), async (req, res) => {
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ['clientName', 'businessName', 'clientImage', 'clientEmail', 'clientPassword', 'clientPhone', 'clientAddress', 'clientGst'];
-  const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
-
-  if (!isValidOperation) {
-    return res.status(400).send({ error: 'Invalid updates!' });
-  }
-
   try {
     const client = await Client.findById(req.params.id);
 
@@ -185,10 +192,24 @@ router.put('/clients/:id', uploadClient.single("clientImage"), async (req, res) 
       client.clientImage = newPath;
     }
 
+    // Update social links
+    client.socialLinks = {
+      linkedin: req.body.linkedin || client.socialLinks.linkedin,
+      instagram: req.body.instagram || client.socialLinks.instagram,
+      youtube: req.body.youtube || client.socialLinks.youtube,
+      facebook: req.body.facebook || client.socialLinks.facebook,
+      pinterest: req.body.pinterest || client.socialLinks.pinterest,
+      github: req.body.github || client.socialLinks.github,
+      website: req.body.website || client.socialLinks.website,
+      other: req.body.other || client.socialLinks.other
+    };
+
     // Update other fields
-    updates.forEach((update) => {
-      if (update !== 'clientImage') {
-        client[update] = req.body[update];
+    const basicFields = ['clientName', 'businessName', 'clientEmail', 
+                        'clientPassword', 'clientPhone', 'clientAddress', 'clientGst'];
+    basicFields.forEach(field => {
+      if (req.body[field]) {
+        client[field] = req.body[field];
       }
     });
 
@@ -196,12 +217,7 @@ router.put('/clients/:id', uploadClient.single("clientImage"), async (req, res) 
     res.status(200).send(client);
   } catch (error) {
     console.error('Error during client update:', error);
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
-      res.status(400).send({ errors });
-    } else {
-      res.status(500).send({ error: 'Internal server error' });
-    }
+    res.status(500).send({ error: 'Internal server error' });
   }
 });
 

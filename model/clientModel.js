@@ -36,6 +36,17 @@ const clientSchema = new Schema({
   
   clientGst: {
     type: String,
+  },
+
+  socialLinks: {
+    linkedin: { type: String },
+    instagram: { type: String },
+    youtube: { type: String },
+    facebook: { type: String },
+    pinterest: { type: String },
+    github: { type: String },
+    website: { type: String },
+    other: { type: String }
   }
 }, {
   timestamps: true
