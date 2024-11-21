@@ -19,6 +19,10 @@ const AdminSchema = new mongoose.Schema({
         type:String,
         enum: ['superadmin', 'admin'],
         default: 'admin'
+    },
+    profileImage: {
+        type: String,
+        default: 'Images/superadminimg.jpg'
     }
 });
 

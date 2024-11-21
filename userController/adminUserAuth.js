@@ -97,3 +97,29 @@ exports.getUserProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { username } = req.body;
+    const userId = req.user.userId; // From JWT token
+
+    const updateData = { username };
+    if (req.file) {
+      updateData.profileImage = req.file.path;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, select: '-password' }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'Profile updated successfully', user });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};

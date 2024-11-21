@@ -72,6 +72,16 @@ const messageStorage = multer.diskStorage({
   }
 });
 
+const profileStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads/profile');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + file.originalname;
+    cb(null, file.fieldname + '-' + uniqueSuffix);
+  }
+});
+
 const uploadEmployee = multer({
   storage: employeeStorage,
   fileFilter: fileFilter,
@@ -102,4 +112,10 @@ const uploadMessage = multer({
   limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
 
-module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage }
+const uploadProfile = multer({
+  storage: profileStorage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
+});
+
+module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile }
