@@ -3,7 +3,7 @@ const path = require('path');
 
 // File filter to check the allowed file types
 const fileFilter = (req, file, cb) => {
-  const fileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|webp/;
+  const fileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|webp|svg|ico|json|txt|csv|json|xml|json5|json4|json3|json2|json1|json0/;
   const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = fileTypes.test(file.mimetype);
 
