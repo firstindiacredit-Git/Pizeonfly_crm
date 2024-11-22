@@ -67,6 +67,24 @@ router.post('/employees', upload, async (req, res) => {
             employeeData.panCard = files.panCard[0].path.replace('uploads\\', "");
         }
 
+        employeeData.socialLinks = {
+            linkedin: employeeData.linkedin || '',
+            instagram: employeeData.instagram || '',
+            youtube: employeeData.youtube || '',
+            facebook: employeeData.facebook || '',
+            github: employeeData.github || '',
+            website: employeeData.website || '',
+            other: employeeData.other || ''
+        };
+
+        delete employeeData.linkedin;
+        delete employeeData.instagram;
+        delete employeeData.youtube;
+        delete employeeData.facebook;
+        delete employeeData.github;
+        delete employeeData.website;
+        delete employeeData.other;
+
         const employee = new Employee(employeeData);
         const savedEmployee = await employee.save();
         sendEmail(savedEmployee);
@@ -204,28 +222,64 @@ router.get("/search", async (req, res) => {
 // Update an employee
 router.put('/employees/:employeeId', upload, async (req, res) => {
     try {
+        // First get the existing employee
+        const existingEmployee = await Employee.findById(req.params.employeeId);
+        if (!existingEmployee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+
         const files = req.files;
         const updatedData = req.body;
 
-        if (files.employeeImage) {
-            updatedData.employeeImage = files.employeeImage[0].path.replace('uploads\\', "");
-        }
-        if (files.resume) {
-            updatedData.resume = files.resume[0].path.replace('uploads\\', "");
-        }
-        if (files.aadhaarCard) {
-            updatedData.aadhaarCard = files.aadhaarCard[0].path.replace('uploads\\', "");
-        }
-        if (files.panCard) {
-            updatedData.panCard = files.panCard[0].path.replace('uploads\\', "");
+        // Handle file uploads if they exist
+        if (files) {
+            if (files.employeeImage) {
+                updatedData.employeeImage = files.employeeImage[0].path.replace('uploads\\', "");
+            }
+            if (files.resume) {
+                updatedData.resume = files.resume[0].path.replace('uploads\\', "");
+            }
+            if (files.aadhaarCard) {
+                updatedData.aadhaarCard = files.aadhaarCard[0].path.replace('uploads\\', "");
+            }
+            if (files.panCard) {
+                updatedData.panCard = files.panCard[0].path.replace('uploads\\', "");
+            }
         }
 
-        const updatedEmployee = await Employee.findByIdAndUpdate(req.params.employeeId, updatedData, { new: true });
-        if (!updatedEmployee) {
-            return res.status(404).json({ message: 'Employee not found' });
-        }
+        // Handle social links - ensure single values and merge with existing links
+        const socialLinks = {
+            linkedin: Array.isArray(updatedData.linkedin) ? updatedData.linkedin[0] : (updatedData.linkedin || existingEmployee.socialLinks?.linkedin || ''),
+            instagram: Array.isArray(updatedData.instagram) ? updatedData.instagram[0] : (updatedData.instagram || existingEmployee.socialLinks?.instagram || ''),
+            youtube: Array.isArray(updatedData.youtube) ? updatedData.youtube[0] : (updatedData.youtube || existingEmployee.socialLinks?.youtube || ''),
+            facebook: Array.isArray(updatedData.facebook) ? updatedData.facebook[0] : (updatedData.facebook || existingEmployee.socialLinks?.facebook || ''),
+            github: Array.isArray(updatedData.github) ? updatedData.github[0] : (updatedData.github || existingEmployee.socialLinks?.github || ''),
+            website: Array.isArray(updatedData.website) ? updatedData.website[0] : (updatedData.website || existingEmployee.socialLinks?.website || ''),
+            other: Array.isArray(updatedData.other) ? updatedData.other[0] : (updatedData.other || existingEmployee.socialLinks?.other || '')
+        };
+
+        // Remove individual social link fields
+        delete updatedData.linkedin;
+        delete updatedData.instagram;
+        delete updatedData.youtube;
+        delete updatedData.facebook;
+        delete updatedData.github;
+        delete updatedData.website;
+        delete updatedData.other;
+
+        // Add the social links object to the update data
+        updatedData.socialLinks = socialLinks;
+
+        // Update the employee with the new data
+        const updatedEmployee = await Employee.findByIdAndUpdate(
+            req.params.employeeId,
+            { $set: updatedData },
+            { new: true }
+        );
+
         res.json(updatedEmployee);
     } catch (err) {
+        console.error('Update error:', err);
         res.status(400).json({ message: err.message });
     }
 });

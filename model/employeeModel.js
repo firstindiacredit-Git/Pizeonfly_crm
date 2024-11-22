@@ -52,6 +52,15 @@ const employeeSchema = new Schema({
     description: {
         type: String
     },
+    socialLinks: {
+        linkedin: { type: String },
+        instagram: { type: String },
+        youtube: { type: String },
+        facebook: { type: String },
+        github: { type: String },
+        website: { type: String },
+        other: { type: String }
+    }
 });
 
 const Employee = mongoose.model("Employee", employeeSchema);
