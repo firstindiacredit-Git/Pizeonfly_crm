@@ -6,31 +6,59 @@ const QRCodeModel = require('../model/qrModel');
 router.post('/qr/generate', async (req, res) => {
     try {
         const { title, content, userId } = req.body;
+        // console.log('Received request to generate QR code:', { title, content, userId });
+        
+        if (!title || !content || !userId) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing required fields' 
+            });
+        }
         
         // Generate QR code
         const qrCodeDataUrl = await QRCode.toDataURL(content);
         
-        // Save to database with userId and title
+        // Save to database
         const newQRCode = new QRCodeModel({ 
             title,
             content,
-            userId 
+            userId,
+            qrCode: qrCodeDataUrl // Save the QR code data URL
         });
-        await newQRCode.save();
         
-        res.json({ success: true, qrCode: qrCodeDataUrl });
+        const savedQRCode = await newQRCode.save();
+        // console.log('Saved QR code:', savedQRCode);
+        
+        res.json({ 
+            success: true, 
+            qrCode: qrCodeDataUrl,
+            savedQRCode // Return the saved document
+        });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error generating QR code:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
     }
 });
 
-// Add new route to get user's QR codes
 router.get('/qr/user/:userId', async (req, res) => {
     try {
-        const userQRCodes = await QRCodeModel.find({ userId: req.params.userId });
-        res.json({ success: true, qrCodes: userQRCodes });
+        const { userId } = req.params;
+        // console.log('Fetching QR codes for user:', userId);
+        
+        const userQRCodes = await QRCodeModel.find({ userId })
+            .sort({ createdAt: -1 }); // Sort by newest first
+        
+        // console.log(`Found ${userQRCodes.length} QR codes for user`);
+        res.json(userQRCodes);
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error fetching QR codes:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
     }
 });
 

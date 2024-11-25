@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 // const multer = require('./utils/multerConfig')
 const employeeController = require("./controller/employeeAuth");
+const employeeDashboards = require("./controller/employeeDashboards");
 const projectRoutes = require("./routes/projectRoutes");
 const adminUserRoutes = require("./userRoute/adminUserRoutes");
 const taskRoutes = require("./routes/taskRoutes");
@@ -103,6 +104,7 @@ app.get("/hello", (req, res) => {
 //Route setup
 app.use("/api", clientRoutes);
 app.use("/api", employeeController);
+app.use("/api", employeeDashboards);
 app.use("/api", projectRoutes);
 app.use("/api", projectMessage);
 app.use("/api", taskMessage);
@@ -112,6 +114,8 @@ app.use("/api", holidayController);
 app.use("/api", invoiceRoutes);
 app.use("/api", qrController);
 app.use("/", urlController);
+
+app.use(express.static(path.join(__dirname, 'dist')));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));

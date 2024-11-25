@@ -5,11 +5,15 @@ const qrCodeSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    content: {
+        type: String,
+        required: true
+    },
     userId: {
         type: String,
         required: true
-    },// take a user id from Local Storag
-    content: {
+    },
+    qrCode: {
         type: String,
         required: true
     },
