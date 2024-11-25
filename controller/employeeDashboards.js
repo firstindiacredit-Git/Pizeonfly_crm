@@ -5,20 +5,51 @@ const EmployeeDash = require('../model/employeeDashModel');
 //Excel Sheet
 router.post('/employeeExcelSheet', async (req, res) => {
     try {
-        const { tables } = req.body;
-        const newExcelSheet = new EmployeeDash({
-            excelSheet: JSON.stringify(tables)
+        const { tables, employeeId } = req.body;
+        
+        // Check if employeeId exists
+        if (!employeeId) {
+            return res.status(400).json({ message: 'Employee ID is required' });
+        }
+
+        // Check if an excel sheet already exists for this employee
+        let existingSheet = await EmployeeDash.findOne({ 
+            employeeId: employeeId,
+            excelSheet: { $exists: true }
         });
-        await newExcelSheet.save();
-        res.status(201).json(newExcelSheet);
+
+        if (existingSheet) {
+            // Update existing sheet
+            existingSheet.excelSheet = JSON.stringify(tables);
+            await existingSheet.save();
+            res.json({
+                _id: existingSheet._id,
+                tables: JSON.parse(existingSheet.excelSheet)
+            });
+        } else {
+            // Create new sheet
+            const newExcelSheet = new EmployeeDash({
+                employeeId: employeeId,
+                excelSheet: JSON.stringify(tables)
+            });
+            await newExcelSheet.save();
+            res.status(201).json({
+                _id: newExcelSheet._id,
+                tables: JSON.parse(newExcelSheet.excelSheet)
+            });
+        }
     } catch (error) {
+        console.error('Excel Sheet Error:', error);
         res.status(500).json({ message: error.message });
     }
 });
 
-router.get('/employeeExcelSheet', async (req, res) => {
+router.get('/employeeExcelSheet/:employeeId', async (req, res) => {
     try {
-        const excelSheet = await EmployeeDash.findOne({ excelSheet: { $exists: true } });
+        const excelSheet = await EmployeeDash.findOne({ 
+            employeeId: req.params.employeeId,
+            excelSheet: { $exists: true } 
+        });
         res.json({ 
             _id: excelSheet?._id,
             tables: excelSheet ? JSON.parse(excelSheet.excelSheet) : [] 
@@ -30,9 +61,18 @@ router.get('/employeeExcelSheet', async (req, res) => {
 
 router.put('/employeeExcelSheet/:id', async (req, res) => {
     try {
-        const { tables } = req.body;
-        const updatedExcelSheet = await EmployeeDash.findByIdAndUpdate(
-            req.params.id,
+        const { tables, employeeId } = req.body;
+        
+        // Check if employeeId exists
+        if (!employeeId) {
+            return res.status(400).json({ message: 'Employee ID is required' });
+        }
+
+        const updatedExcelSheet = await EmployeeDash.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                employeeId: employeeId // Ensure we're updating the correct employee's sheet
+            },
             { excelSheet: JSON.stringify(tables) },
             { new: true }
         );
@@ -43,9 +83,10 @@ router.put('/employeeExcelSheet/:id', async (req, res) => {
         
         res.json({
             _id: updatedExcelSheet._id,
-            excelSheet: updatedExcelSheet.excelSheet
+            tables: JSON.parse(updatedExcelSheet.excelSheet)
         });
     } catch (error) {
+        console.error('Excel Sheet Update Error:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -63,20 +104,51 @@ router.delete('/employeeExcelSheet/:id', async (req, res) => {
 //NotePad
 router.post('/employeeNotePad', async (req, res) => {
     try {
-        const { notes } = req.body;
-        const newNotePad = new EmployeeDash({
-            notePad: notes
+        const { notes, employeeId } = req.body;
+        
+        // Check if employeeId exists
+        if (!employeeId) {
+            return res.status(400).json({ message: 'Employee ID is required' });
+        }
+
+        // Check if a notepad already exists for this employee
+        let existingNotePad = await EmployeeDash.findOne({ 
+            employeeId: employeeId,
+            notePad: { $exists: true }
         });
-        await newNotePad.save();
-        res.status(201).json(newNotePad);
+
+        if (existingNotePad) {
+            // Update existing notepad
+            existingNotePad.notePad = notes;
+            await existingNotePad.save();
+            res.json({
+                _id: existingNotePad._id,
+                notes: existingNotePad.notePad
+            });
+        } else {
+            // Create new notepad
+            const newNotePad = new EmployeeDash({
+                employeeId: employeeId,
+                notePad: notes
+            });
+            await newNotePad.save();
+            res.status(201).json({
+                _id: newNotePad._id,
+                notes: newNotePad.notePad
+            });
+        }
     } catch (error) {
+        console.error('NotePad Error:', error);
         res.status(500).json({ message: error.message });
     }
 });
 
-router.get('/employeeNotePad', async (req, res) => {
+router.get('/employeeNotePad/:employeeId', async (req, res) => {
     try {
-        const notePad = await EmployeeDash.findOne({ notePad: { $exists: true } });
+        const notePad = await EmployeeDash.findOne({ 
+            employeeId: req.params.employeeId,
+            notePad: { $exists: true } 
+        });
         res.json({ notes: notePad ? notePad.notePad : '' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -85,14 +157,32 @@ router.get('/employeeNotePad', async (req, res) => {
 
 router.put('/employeeNotePad/:id', async (req, res) => {
     try {
-        const { notes } = req.body;
-        const updatedNotePad = await EmployeeDash.findByIdAndUpdate(
-            req.params.id,
+        const { notes, employeeId } = req.body;
+        
+        // Check if employeeId exists
+        if (!employeeId) {
+            return res.status(400).json({ message: 'Employee ID is required' });
+        }
+
+        const updatedNotePad = await EmployeeDash.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                employeeId: employeeId // Ensure we're updating the correct employee's notepad
+            },
             { notePad: notes },
             { new: true }
         );
-        res.json(updatedNotePad);
+
+        if (!updatedNotePad) {
+            return res.status(404).json({ message: 'NotePad not found' });
+        }
+
+        res.json({
+            _id: updatedNotePad._id,
+            notes: updatedNotePad.notePad
+        });
     } catch (error) {
+        console.error('NotePad Update Error:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -110,8 +200,9 @@ router.delete('/employeeNotePad/:id', async (req, res) => {
 //Todo List
 router.post('/employeeTodoList', async (req, res) => {
     try {
-        const { todos } = req.body;
+        const { todos, employeeId } = req.body;
         const newTodoList = new EmployeeDash({
+            employeeId,
             todoList: JSON.stringify(todos)
         });
         await newTodoList.save();
@@ -121,9 +212,12 @@ router.post('/employeeTodoList', async (req, res) => {
     }
 });
 
-router.get('/employeeTodoList', async (req, res) => {
+router.get('/employeeTodoList/:employeeId', async (req, res) => {
     try {
-        const todoList = await EmployeeDash.findOne({ todoList: { $exists: true } });
+        const todoList = await EmployeeDash.findOne({ 
+            employeeId: req.params.employeeId,
+            todoList: { $exists: true } 
+        });
         const todos = todoList ? JSON.parse(todoList.todoList) : [];
         res.json({ 
             _id: todoList?._id,
