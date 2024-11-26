@@ -12,12 +12,12 @@ router.get('/pros/search', taskController.searchTask);
 router.put('/tasks/:id', uploadTask.array("taskImages", 5), taskController.updateTaskById);
 router.delete('/tasks/:id', taskController.deleteTaskById);
 
-router.get('/author', taskController.getTask)
+router.post('/author', taskController.getTask)
 // router.put('/author/:id', taskController.addTaskDescription);
 
 router.put('/update/:id', taskController.updateTaskStatus)
 
 // New route for total tasks by assignee
-router.get('/totalAssigneeTasks', taskController.getTotalTasksByAssignee);
+router.post('/totalAssigneeTasks', taskController.getTotalTasksByAssignee);
 
 module.exports = router;

@@ -250,13 +250,14 @@ exports.deleteTaskById = async (req, res) => {
 
 //Get task by Task Assigne Person (token)
 exports.getTask = async (req, res) => {
-  const author = req.headers.authorization;
-  const decodeToken = jwt.decode(author);
+  // const author = req.headers.authorization;
+  // const decodeToken = jwt.decode(author);
+  const { _id } = req.body
 
   try {
     const tasks = await Task.find({
       taskAssignPerson: {
-        $in: [decodeToken]
+        $in: [_id]
       }
     }).populate("taskAssignPerson");
 
@@ -303,23 +304,24 @@ exports.updateTaskStatus = async (req, res) => {
 
 // Get total tasks by Task Assignee Person (token)
 exports.getTotalTasksByAssignee = async (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) {
-    return res.status(401).json({ message: "Authorization token is required" });
-  }
+  // const auth = req.headers.authorization;
+  // if (!auth || !auth.startsWith('Bearer ')) {
+  //   return res.status(401).json({ message: "Authorization token is required" });
+  // }
 
-  const token = auth.split(' ')[1];
-  const decodedToken = jwt.decode(token);
+  // const token = auth.split(' ')[1];
+  // const decodedToken = jwt.decode(token);
 
-  if (!decodedToken || !decodedToken._id) {
-    return res.status(400).json({ message: "Invalid token or missing user ID" });
-  }
+  // if (!decodedToken || !decodedToken._id) {
+  //   return res.status(400).json({ message: "Invalid token or missing user ID" });
+  // }
+  const { _id } = req.body
 
   try {
     const totalTasks = await Task.countDocuments({
-      taskAssignPerson: decodedToken._id
+      taskAssignPerson: _id
     });
-    res.json({ totalTasks });
+    return res.json({ totalTasks });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

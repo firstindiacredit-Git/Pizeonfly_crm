@@ -270,25 +270,16 @@ exports.getProjectForClient = async (req, res) => {
 
 // Total projects by Task Assignee Person (token)
 exports.getTotalProjectsByAssignee = async (req, res) => {
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith('Bearer ')) {
-        return res.status(401).json({ message: "Authorization token is required" });
-    }
-
-    const token = auth.split(' ')[1];
-    const decodedToken = jwt.decode(token);
-
-    if (!decodedToken || !decodedToken._id) {
-        return res.status(400).json({ message: "Invalid token or missing user ID" });
-    }
+    
+    const { _id } = req.body
 
     try {
         const totalProjects = await Project.countDocuments({
-            taskAssignPerson: decodedToken._id
+            taskAssignPerson: _id
         });
-        res.json({ totalProjects });
+        return res.json({ totalProjects });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: err.message[0] });
     }
 };
 

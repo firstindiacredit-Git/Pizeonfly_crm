@@ -14,7 +14,7 @@ router.get('/employee-projects', projectController.getProject)
 router.get('/auth-task', projectController.getProjecttask)
 router.get('/totalProjects', projectController.getTotalProjects);
 router.get('/client-projects', projectController.getProjectForClient);
-router.get('/totalAssigneeProjects', projectController.getTotalProjectsByAssignee);
+router.post('/totalAssigneeProjects', projectController.getTotalProjectsByAssignee);
 
 // Add this new route
 router.get('/projectStatusCounts', projectController.getProjectStatusCounts);
