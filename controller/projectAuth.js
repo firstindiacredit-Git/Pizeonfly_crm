@@ -169,13 +169,12 @@ exports.deleteProject = async (req, res) => {
 
 //Get project by Task Assigne Person (token)
 exports.getProject = async (req, res) => {
-    const auth = req.headers.authorization
-    const decodedToken = jwt.decode(auth)
+    // const auth = req.headers.authorization
+    // const decodedToken = jwt.decode(auth)
+    const { _id } = req.body
     try {
         const projects = await Project.find({
-            taskAssignPerson: {
-                $in: [decodedToken]
-            }
+            taskAssignPerson: _id
         }).populate("taskAssignPerson").populate("clientAssignPerson");
 
         // Fetch all tasks in a single query for efficiency
@@ -197,6 +196,7 @@ exports.getProject = async (req, res) => {
         });
 
         res.json(updatedProjects);
+        return updatedProjects;
     } catch (err) {
         return res.status(500).json({ message: "Internal server error" });
     }

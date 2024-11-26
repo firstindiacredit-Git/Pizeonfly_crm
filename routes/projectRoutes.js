@@ -10,7 +10,7 @@ router.get('/pro/search', projectController.searchProjects);
 router.put('/projects/:projectId', uploadProject.array("projectImage", 10), projectController.updateProject);
 router.delete('/projects/:projectId', projectController.deleteProject);
 
-router.get('/employee-projects', projectController.getProject)
+router.post('/employee-projects', projectController.getProject)
 router.get('/auth-task', projectController.getProjecttask)
 router.get('/totalProjects', projectController.getTotalProjects);
 router.get('/client-projects', projectController.getProjectForClient);
