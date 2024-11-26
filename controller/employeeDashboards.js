@@ -68,10 +68,15 @@ router.put('/employeeExcelSheet/:id', async (req, res) => {
             return res.status(400).json({ message: 'Employee ID is required' });
         }
 
+        // Add validation to ensure at least one table remains
+        if (!Array.isArray(tables) || tables.length === 0) {
+            return res.status(400).json({ message: 'At least one table must exist' });
+        }
+
         const updatedExcelSheet = await EmployeeDash.findOneAndUpdate(
             {
                 _id: req.params.id,
-                employeeId: employeeId // Ensure we're updating the correct employee's sheet
+                employeeId: employeeId
             },
             { excelSheet: JSON.stringify(tables) },
             { new: true }
