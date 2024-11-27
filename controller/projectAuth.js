@@ -169,18 +169,17 @@ exports.deleteProject = async (req, res) => {
 
 //Get project by Task Assigne Person (token)
 exports.getProject = async (req, res) => {
-    // const auth = req.headers.authorization
-    // const decodedToken = jwt.decode(auth)
     const { _id } = req.body
     try {
         const projects = await Project.find({
             taskAssignPerson: _id
-        }).populate("taskAssignPerson").populate("clientAssignPerson");
+        })
+        .sort({ createdAt: -1 })
+        .populate("taskAssignPerson")
+        .populate("clientAssignPerson");
 
-        // Fetch all tasks in a single query for efficiency
         const allTasks = await Task.find();
 
-        // Calculate progress and status for each project
         const updatedProjects = projects.map(project => {
             const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
             const totalTasks = projectTasks.length;
