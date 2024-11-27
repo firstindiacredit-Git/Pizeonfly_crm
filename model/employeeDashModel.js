@@ -14,6 +14,18 @@ const employeeDashSchema = new Schema({
     },
     todoList: {
         type: String,
+    },
+    notepadColor: {
+        type: String,
+        // default: '#fff3cd'
+    },
+    todoColor: {
+        type: String,
+        // default: '#cfe2ff'
+    },
+    excelSheetColor: {
+        type: String,
+        // default: '#d4edda'
     }
 }, {
     timestamps: true

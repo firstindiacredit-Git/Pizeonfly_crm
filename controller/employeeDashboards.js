@@ -264,4 +264,54 @@ router.delete('/employeeTodoList/:id', async (req, res) => {
     }
 });
 
+// Update the route for getting colors
+router.get('/employeeColors/:employeeId', async (req, res) => {
+    try {
+        const employeeDash = await EmployeeDash.findOne({ employeeId: req.params.employeeId });
+        
+        if (!employeeDash) {
+            return res.json({
+                notepadColor: '#fff3cd',
+                todoColor: '#cfe2ff',
+                excelSheetColor: '#d4edda'
+            });
+        }
+        
+        res.json({
+            notepadColor: employeeDash.notepadColor || '#fff3cd',
+            todoColor: employeeDash.todoColor || '#cfe2ff',
+            excelSheetColor: employeeDash.excelSheetColor || '#d4edda'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Update the route for setting colors
+router.put('/employeeColors/:employeeId', async (req, res) => {
+    try {
+        const { notepadColor, todoColor, excelSheetColor } = req.body;
+        
+        const updatedDash = await EmployeeDash.findOneAndUpdate(
+            { employeeId: req.params.employeeId },
+            { 
+                $set: { 
+                    notepadColor,
+                    todoColor,
+                    excelSheetColor
+                } 
+            },
+            { new: true, upsert: true }
+        );
+        
+        res.json({
+            notepadColor: updatedDash.notepadColor,
+            todoColor: updatedDash.todoColor,
+            excelSheetColor: updatedDash.excelSheetColor
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 module.exports = router;
