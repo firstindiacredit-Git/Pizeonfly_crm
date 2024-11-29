@@ -15,6 +15,7 @@ const holidayController = require("./controller/holidayAuth");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const urlController = require("./controller/urlShortner");
 const qrController = require("./controller/qrRoutes");
+const adminDashboard = require("./userController/adminDashboard");
 const http = require('http');
 const { Server } = require("socket.io");
 
@@ -113,6 +114,7 @@ app.use("/api", adminUserRoutes);
 app.use("/api", holidayController);
 app.use("/api", invoiceRoutes);
 app.use("/api", qrController);
+app.use("/api", adminDashboard);
 app.use("/", urlController);
 
 app.use(express.static(path.join(__dirname, 'dist')));
