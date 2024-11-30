@@ -39,10 +39,10 @@ router.get('/totalEmployees', async (req, res) => {
 //     }
 // });
 const upload = uploadEmployee.fields([
-  { name: 'employeeImage', maxCount: 1 },
-  { name: 'resume', maxCount: 2  },
-  { name: 'aadhaarCard', maxCount: 2 },
-  { name: 'panCard', maxCount: 2 }
+    { name: 'employeeImage', maxCount: 1 },
+    { name: 'resume', maxCount: 2 },
+    { name: 'aadhaarCard', maxCount: 2 },
+    { name: 'panCard', maxCount: 2 }
 ]);
 
 router.post('/employees', upload, async (req, res) => {
@@ -295,6 +295,39 @@ router.delete('/employees/:employeeId', async (req, res) => {
         }
         res.json({ message: 'Employee deleted successfully' });
     } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Add this new route to handle document deletion
+router.patch('/employees/:employeeId/document', async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        const { documentType } = req.body;
+
+        // Validate document type
+        if (!['aadhaarCard', 'panCard', 'resume'].includes(documentType)) {
+            return res.status(400).json({ message: 'Invalid document type' });
+        }
+
+        // Create update object
+        const updateObj = {
+            [documentType]: null
+        };
+
+        const updatedEmployee = await Employee.findByIdAndUpdate(
+            employeeId,
+            { $set: updateObj },
+            { new: true }
+        );
+
+        if (!updatedEmployee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+
+        res.json(updatedEmployee);
+    } catch (err) {
+        console.error('Error deleting document:', err);
         res.status(500).json({ message: err.message });
     }
 });
