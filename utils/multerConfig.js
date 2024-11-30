@@ -23,6 +23,8 @@ const employeeStorage = multer.diskStorage({
       uploadPath = './uploads/employee/aadhaar';
     } else if (file.fieldname === 'panCard') {
       uploadPath = './uploads/employee/pan';
+    } else if (file.fieldname === 'qrCode') {
+      uploadPath = './uploads/employee/qr';
     }
     cb(null, uploadPath);
   },

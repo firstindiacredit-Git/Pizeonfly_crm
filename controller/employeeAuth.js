@@ -42,7 +42,8 @@ const upload = uploadEmployee.fields([
     { name: 'employeeImage', maxCount: 1 },
     { name: 'resume', maxCount: 2 },
     { name: 'aadhaarCard', maxCount: 2 },
-    { name: 'panCard', maxCount: 2 }
+    { name: 'panCard', maxCount: 2 },
+    { name: 'qrCode', maxCount: 1 }
 ]);
 
 router.post('/employees', upload, async (req, res) => {
@@ -84,6 +85,32 @@ router.post('/employees', upload, async (req, res) => {
         delete employeeData.github;
         delete employeeData.website;
         delete employeeData.other;
+
+        // Handle bank details
+        employeeData.bankDetails = {
+            bankName: employeeData.bankName || '',
+            accountHolderName: employeeData.accountHolderName || '',
+            accountNumber: employeeData.accountNumber || '',
+            ifscCode: employeeData.ifscCode || '',
+            accountType: employeeData.accountType || '',
+            upiId: employeeData.upiId || '',
+            paymentApp: employeeData.paymentApp || ''
+        };
+
+        if (files.qrCode) {
+            employeeData.bankDetails.qrCode = files.qrCode[0].path
+                .replace(/\\/g, '/')
+                .replace('uploads/', '');
+        }
+
+        // Remove individual bank detail fields
+        delete employeeData.bankName;
+        delete employeeData.accountHolderName;
+        delete employeeData.accountNumber;
+        delete employeeData.ifscCode;
+        delete employeeData.accountType;
+        delete employeeData.upiId;
+        delete employeeData.paymentApp;
 
         const employee = new Employee(employeeData);
         const savedEmployee = await employee.save();
@@ -269,6 +296,35 @@ router.put('/employees/:employeeId', upload, async (req, res) => {
 
         // Add the social links object to the update data
         updatedData.socialLinks = socialLinks;
+
+        // Handle bank details
+        const bankDetails = {
+            bankName: Array.isArray(updatedData.bankName) ? updatedData.bankName[0] : (updatedData.bankName || existingEmployee.bankDetails?.bankName || ''),
+            accountHolderName: Array.isArray(updatedData.accountHolderName) ? updatedData.accountHolderName[0] : (updatedData.accountHolderName || existingEmployee.bankDetails?.accountHolderName || ''),
+            accountNumber: Array.isArray(updatedData.accountNumber) ? updatedData.accountNumber[0] : (updatedData.accountNumber || existingEmployee.bankDetails?.accountNumber || ''),
+            ifscCode: Array.isArray(updatedData.ifscCode) ? updatedData.ifscCode[0] : (updatedData.ifscCode || existingEmployee.bankDetails?.ifscCode || ''),
+            accountType: Array.isArray(updatedData.accountType) ? updatedData.accountType[0] : (updatedData.accountType || existingEmployee.bankDetails?.accountType || ''),
+            upiId: Array.isArray(updatedData.upiId) ? updatedData.upiId[0] : (updatedData.upiId || existingEmployee.bankDetails?.upiId || ''),
+            paymentApp: Array.isArray(updatedData.paymentApp) ? updatedData.paymentApp[0] : (updatedData.paymentApp || existingEmployee.bankDetails?.paymentApp || '')
+        };
+
+        if (files && files.qrCode) {
+            bankDetails.qrCode = files.qrCode[0].path
+                .replace(/\\/g, '/')
+                .replace('uploads/', '');
+        }
+
+        // Remove individual bank detail fields
+        delete updatedData.bankName;
+        delete updatedData.accountHolderName;
+        delete updatedData.accountNumber;
+        delete updatedData.ifscCode;
+        delete updatedData.accountType;
+        delete updatedData.upiId;
+        delete updatedData.paymentApp;
+
+        // Add the bank details object to the update data
+        updatedData.bankDetails = bankDetails;
 
         // Update the employee with the new data
         const updatedEmployee = await Employee.findByIdAndUpdate(

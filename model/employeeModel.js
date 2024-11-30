@@ -60,6 +60,16 @@ const employeeSchema = new Schema({
         github: { type: String },
         website: { type: String },
         other: { type: String }
+    },
+    bankDetails: {
+        accountNumber: { type: String },
+        accountType: { type: String },
+        accountHolderName: { type: String },
+        ifscCode: { type: String },
+        bankName: { type: String },
+        upiId: { type: String },
+        qrCode: { type: String },
+        paymentApp: { type: String }
     }
 });
 
