@@ -40,9 +40,9 @@ router.get('/totalEmployees', async (req, res) => {
 // });
 const upload = uploadEmployee.fields([
     { name: 'employeeImage', maxCount: 1 },
-    { name: 'resume', maxCount: 2 },
-    { name: 'aadhaarCard', maxCount: 2 },
-    { name: 'panCard', maxCount: 2 },
+    { name: 'resume', maxCount: 1 },
+    { name: 'aadhaarCard', maxCount: 1 },
+    { name: 'panCard', maxCount: 1 },
     { name: 'qrCode', maxCount: 1 }
 ]);
 
