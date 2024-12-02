@@ -3,11 +3,11 @@ const router = express.Router();
 const projectController = require('../controller/projectAuth');
 const { uploadProject } = require('../utils/multerConfig');
 
-router.post('/projects', uploadProject.array('projectImage', 10), projectController.createProject);
+router.post('/projects', uploadProject, projectController.createProject);
 router.get('/projects', projectController.getAllProjects);
 router.get('/projects/:projectId', projectController.getProjectById);
 router.get('/pro/search', projectController.searchProjects);
-router.put('/projects/:projectId', uploadProject.array("projectImage", 10), projectController.updateProject);
+router.put('/projects/:projectId', uploadProject, projectController.updateProject);
 router.delete('/projects/:projectId', projectController.deleteProject);
 
 router.post('/employee-projects', projectController.getProject)

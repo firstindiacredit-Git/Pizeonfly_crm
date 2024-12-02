@@ -18,9 +18,11 @@ exports.getTotalProjects = async (req, res) => {
 // Create a new project
 exports.createProject = async (req, res) => {
     try {
-        // Process project images
-        const paths = req.files?.map(file => file.path);
-        const newPaths = paths?.map(path => path.replace('uploads\\', ""));
+        // Handle project images
+        const projectImages = req.files['projectImage']?.map(file => file.path.replace('uploads\\', "")) || [];
+
+        // Handle project icon
+        const projectIcon = req.files['projectIcon']?.[0]?.path.replace('uploads\\', "") || null;
 
         // Filter taskAssignPerson to remove empty values
         const taskAssigner = req.body.taskAssignPerson || [];
@@ -30,12 +32,13 @@ exports.createProject = async (req, res) => {
         const clientAssigner = req.body.clientAssignPerson || [];
         const filteredClientAssigner = clientAssigner.filter(client => client !== "");
 
-        // Assign valid data to the project
+        // Create new project
         const project = new Project({
             ...req.body,
-            projectImage: newPaths,
+            projectImage: projectImages,
+            projectIcon: projectIcon,
             taskAssignPerson: filteredTaskAssigner,
-            clientAssignPerson: filteredClientAssigner, // Handle multiple clients
+            clientAssignPerson: filteredClientAssigner,
         });
 
         const savedProject = await project.save();
@@ -54,13 +57,13 @@ exports.getAllProjects = async (req, res) => {
 
         const updatedProjects = projects.map(project => {
             const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
-            
+
             // Count tasks by status
             const totalTasks = projectTasks.length;
             const completedTasks = projectTasks.filter(task => task.isCompleted).length;
             const inProgressTasks = projectTasks.filter(task => !task.isCompleted && task.taskStatus === 'In Progress').length;
             const notStartedTasks = projectTasks.filter(task => !task.isCompleted && (!task.taskStatus || task.taskStatus === 'Not Started')).length;
-            
+
             const percent = (completedTasks / totalTasks * 100 || 0).toFixed(2);
             const status = percent === "100.00" ? "Completed" : "In Progress";
 
@@ -117,16 +120,22 @@ exports.updateProject = async (req, res) => {
     try {
         const updateData = { ...req.body };
 
-        // Handle project image
-        if (req.files && req.files.length > 0) {
-            const paths = req.files.map(file => file.path);
-            const newPaths = paths.map(path => path.replace('uploads\\', ""));
-            updateData.projectImage = newPaths;
+        // Handle project images if new ones are uploaded
+        if (req.files['projectImage']) {
+            const projectImages = req.files['projectImage'].map(file =>
+                file.path.replace('uploads\\', "")
+            );
+            updateData.projectImage = projectImages;
+        }
+
+        // Handle project icon if a new one is uploaded
+        if (req.files['projectIcon']) {
+            updateData.projectIcon = req.files['projectIcon'][0].path.replace('uploads\\', "");
         }
 
         // Handle taskAssignPerson
         if (updateData.taskAssignPerson) {
-            updateData.taskAssignPerson = Array.isArray(updateData.taskAssignPerson) 
+            updateData.taskAssignPerson = Array.isArray(updateData.taskAssignPerson)
                 ? updateData.taskAssignPerson.filter(id => id && id !== 'undefined')
                 : [updateData.taskAssignPerson].filter(id => id && id !== 'undefined');
         }
@@ -139,8 +148,8 @@ exports.updateProject = async (req, res) => {
         }
 
         const updatedProject = await Project.findByIdAndUpdate(
-            req.params.projectId, 
-            updateData, 
+            req.params.projectId,
+            updateData,
             { new: true, runValidators: true }
         );
 
@@ -174,9 +183,9 @@ exports.getProject = async (req, res) => {
         const projects = await Project.find({
             taskAssignPerson: _id
         })
-        .sort({ createdAt: -1 })
-        .populate("taskAssignPerson")
-        .populate("clientAssignPerson");
+            .sort({ createdAt: -1 })
+            .populate("taskAssignPerson")
+            .populate("clientAssignPerson");
 
         const allTasks = await Task.find();
 
@@ -269,7 +278,7 @@ exports.getProjectForClient = async (req, res) => {
 
 // Total projects by Task Assignee Person (token)
 exports.getTotalProjectsByAssignee = async (req, res) => {
-    
+
     const { _id } = req.body
 
     try {
@@ -296,7 +305,7 @@ exports.getProjectStatusCounts = async (req, res) => {
             const totalTasks = projectTasks.length;
             const completedTaskNum = projectTasks.filter(task => task.isCompleted).length;
             const percent = (completedTaskNum / totalTasks * 100 || 0).toFixed(2);
-            
+
             if (percent === "100.00") {
                 completedCount++;
             } else {

@@ -35,6 +35,10 @@ const projectSchema = new mongoose.Schema({
     description: {
         type: String
     },
+    projectIcon: {
+        type: String,
+        default: null
+    },
 });
 
 const Project = mongoose.model('Project', projectSchema);

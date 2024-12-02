@@ -36,7 +36,11 @@ const employeeStorage = multer.diskStorage({
 
 const projectStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './uploads/project');
+    if (file.fieldname === 'projectIcon') {
+      cb(null, './uploads/project/icons');
+    } else {
+      cb(null, './uploads/project');
+    }
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + file.originalname;
@@ -92,9 +96,12 @@ const uploadEmployee = multer({
 
 const uploadProject = multer({
   storage: projectStorage,
-  fileFilter: fileFilter, // Apply the file filter
+  fileFilter: fileFilter,
   limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
-});
+}).fields([
+  { name: 'projectImage', maxCount: 10 }, // Allow multiple project images
+  { name: 'projectIcon', maxCount: 1 }    // Allow one project icon
+]);
 
 const uploadTask = multer({
   storage: taskStorage,
