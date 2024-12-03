@@ -53,16 +53,41 @@ exports.createProject = async (req, res) => {
 exports.getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find().populate("taskAssignPerson").populate("clientAssignPerson");
-        const allTasks = await Task.find();
+        const allTasks = await Task.find().populate("taskAssignPerson");
 
         const updatedProjects = projects.map(project => {
             const projectTasks = allTasks.filter(task => task.projectName === project.projectName);
 
-            // Count tasks by status
+            // Count overall project tasks by status
             const totalTasks = projectTasks.length;
             const completedTasks = projectTasks.filter(task => task.isCompleted).length;
             const inProgressTasks = projectTasks.filter(task => !task.isCompleted && task.taskStatus === 'In Progress').length;
             const notStartedTasks = projectTasks.filter(task => !task.isCompleted && (!task.taskStatus || task.taskStatus === 'Not Started')).length;
+
+            // Calculate member-specific statistics
+            const memberStats = project.taskAssignPerson.map(member => {
+                const memberTasks = projectTasks.filter(task => {
+                    // Ensure taskAssignPerson is an array
+                    const assignees = Array.isArray(task.taskAssignPerson) ? 
+                        task.taskAssignPerson : 
+                        [task.taskAssignPerson];
+
+                    // Check if the member is in the assignees
+                    return assignees.some(assignee => 
+                        assignee && assignee._id && 
+                        assignee._id.toString() === member._id.toString()
+                    );
+                });
+
+                return {
+                    _id: member._id,
+                    employeeName: member.employeeName,
+                    totalTasks: memberTasks.length,
+                    completed: memberTasks.filter(task => task.isCompleted).length,
+                    inProgress: memberTasks.filter(task => !task.isCompleted && task.taskStatus === 'In Progress').length,
+                    notStarted: memberTasks.filter(task => !task.isCompleted && (!task.taskStatus || task.taskStatus === 'Not Started')).length
+                };
+            });
 
             const percent = (completedTasks / totalTasks * 100 || 0).toFixed(2);
             const status = percent === "100.00" ? "Completed" : "In Progress";
@@ -76,12 +101,14 @@ exports.getAllProjects = async (req, res) => {
                     completed: completedTasks,
                     inProgress: inProgressTasks,
                     notStarted: notStartedTasks
-                }
+                },
+                memberStats
             };
         });
 
         res.json(updatedProjects);
     } catch (err) {
+        console.error('Error in getAllProjects:', err);
         res.status(500).json({ message: err.message });
     }
 };
@@ -145,6 +172,11 @@ exports.updateProject = async (req, res) => {
             updateData.clientAssignPerson = Array.isArray(updateData.clientAssignPerson)
                 ? updateData.clientAssignPerson.filter(id => id && id !== 'undefined')
                 : [updateData.clientAssignPerson].filter(id => id && id !== 'undefined');
+        }
+
+        // Ensure backgroundColor is included in the update
+        if (updateData.backgroundColor) {
+            updateData.backgroundColor = updateData.backgroundColor;
         }
 
         const updatedProject = await Project.findByIdAndUpdate(

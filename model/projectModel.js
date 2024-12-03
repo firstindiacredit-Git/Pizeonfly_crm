@@ -39,6 +39,10 @@ const projectSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    backgroundColor: {
+        type: String,
+        default: '#ffffff'
+    },
 });
 
 const Project = mongoose.model('Project', projectSchema);
