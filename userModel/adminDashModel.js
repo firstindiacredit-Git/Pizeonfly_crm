@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const adminDashSchema = new Schema({
-    userId: {
-        type: String,
+    email: {
+        type: String,// take from local storage(user)
         required: true
     },
     excelSheet: {
@@ -17,15 +17,12 @@ const adminDashSchema = new Schema({
     },
     notepadColor: {
         type: String,
-        // default: '#fff3cd'
     },
     todoColor: {
         type: String,
-        // default: '#cfe2ff'
     },
     excelSheetColor: {
         type: String,
-        // default: '#d4edda'
     }
 }, {
     timestamps: true
