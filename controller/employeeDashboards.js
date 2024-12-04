@@ -154,8 +154,21 @@ router.get('/employeeNotePad/:employeeId', async (req, res) => {
             employeeId: req.params.employeeId,
             notePad: { $exists: true } 
         });
-        res.json({ notes: notePad ? notePad.notePad : '' });
+        
+        // If no notepad exists or notepad field is null/undefined, return empty string
+        if (!notePad || !notePad.notePad) {
+            return res.json({ 
+                _id: null,
+                notes: '' 
+            });
+        }
+
+        res.json({ 
+            _id: notePad._id,
+            notes: notePad.notePad 
+        });
     } catch (error) {
+        console.error('Get NotePad Error:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -194,9 +207,22 @@ router.put('/employeeNotePad/:id', async (req, res) => {
 
 router.delete('/employeeNotePad/:id', async (req, res) => {
     try {
-        await EmployeeDash.findByIdAndDelete(req.params.id);
+        // Find and remove the notepad field from the document
+        const result = await EmployeeDash.findByIdAndUpdate(
+            req.params.id,
+            { 
+                $unset: { notePad: 1 } // This removes the notePad field entirely
+            },
+            { new: true }
+        );
+
+        if (!result) {
+            return res.status(404).json({ message: 'NotePad not found' });
+        }
+
         res.json({ message: 'NotePad deleted successfully' });
     } catch (error) {
+        console.error('Delete NotePad Error:', error);
         res.status(500).json({ message: error.message });
     }
 });
