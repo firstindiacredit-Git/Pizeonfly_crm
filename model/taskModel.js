@@ -18,7 +18,11 @@ const taskSchema = new Schema({
     },
     taskDate: {
         type: Date,
-        default: Date.now
+        default: () => {
+            // Create date in Indian timezone (UTC+5:30)
+            const indiaTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+            return new Date(indiaTime);
+        }
     },
     taskImages: [{
         type: String,

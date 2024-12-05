@@ -112,6 +112,9 @@ exports.createTask = async (req, res) => {
     // Adding paths of uploaded images to req.body
     req.body.taskImages = newPaths;
 
+    // Add current Indian time
+    req.body.taskDate = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+
     // Creating a new Task instance
     const task = new Task({ ...req.body, taskAssignPerson: taskAssigner });
 
@@ -164,7 +167,11 @@ exports.createTask = async (req, res) => {
 // Get all tasks
 exports.getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 }).populate('taskAssignPerson');
+    // Sort by taskDate in descending order (-1)
+    const tasks = await Task.find()
+      .sort({ taskDate: -1 })
+      .populate('taskAssignPerson');
+
     const projectNames = tasks.map(task => task.projectName);
 
     const projects = await Project.find({ projectName: { $in: projectNames } }).populate({
