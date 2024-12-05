@@ -123,3 +123,20 @@ exports.updateProfile = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.verifySecurityPin = async (req, res) => {
+  const { pin } = req.body;
+  
+  try {
+    // Replace this with your actual security PIN
+    const SECURITY_PIN = process.env.SECURITY_PIN || "123456";
+    
+    if (pin === SECURITY_PIN) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ success: false, message: "Invalid security PIN" });
+    }
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};

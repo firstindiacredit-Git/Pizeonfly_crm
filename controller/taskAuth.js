@@ -250,39 +250,39 @@ exports.deleteTaskById = async (req, res) => {
 
 //Get task by Task Assigne Person (token)
 exports.getTask = async (req, res) => {
-    const { _id } = req.body
+  const { _id } = req.body
 
-    try {
-        // Added sort by createdAt in descending order
-        const tasks = await Task.find({
-            taskAssignPerson: {
-                $in: [_id]
-            }
-        })
-        .sort({ createdAt: -1 }) // Add this line to sort by most recent
-        .populate("taskAssignPerson");
+  try {
+    // Added sort by createdAt in descending order
+    const tasks = await Task.find({
+      taskAssignPerson: {
+        $in: [_id]
+      }
+    })
+      .sort({ createdAt: -1 }) // Add this line to sort by most recent
+      .populate("taskAssignPerson");
 
-        // Count tasks by status
-        const taskStatusCount = {
-            completed: 0,
-            inProgress: 0,
-            notStarted: 0
-        };
+    // Count tasks by status
+    const taskStatusCount = {
+      completed: 0,
+      inProgress: 0,
+      notStarted: 0
+    };
 
-        tasks.forEach(task => {
-            if (task.isCompleted) {
-                taskStatusCount.completed++;
-            } else if (task.taskStatus === 'In Progress') {
-                taskStatusCount.inProgress++;
-            } else {
-                taskStatusCount.notStarted++;
-            }
-        });
+    tasks.forEach(task => {
+      if (task.isCompleted) {
+        taskStatusCount.completed++;
+      } else if (task.taskStatus === 'In Progress') {
+        taskStatusCount.inProgress++;
+      } else {
+        taskStatusCount.notStarted++;
+      }
+    });
 
-        res.json({ tasks, taskStatusCount });
-    } catch (err) {
-        return res.status(500).json({ message: "Internal server error" });
-    }
+    res.json({ tasks, taskStatusCount });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
 }
 
 // Update task status
