@@ -16,6 +16,7 @@ const invoiceRoutes = require("./routes/invoiceRoutes");
 const urlController = require("./controller/urlShortner");
 const qrController = require("./controller/qrRoutes");
 const adminDashboard = require("./userController/adminDashboard");
+const chatAuth = require("./chatController/chatAuth");
 const http = require('http');
 const { Server } = require("socket.io");
 
@@ -89,6 +90,24 @@ io.on('connection', (socket) => {
     io.to(data.taskId).emit('new task message', data);
   });
 
+  // Join personal chat room
+  socket.on('join_chat', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their chat room`);
+  });
+
+  // Handle private message
+  socket.on('private_message', (data) => {
+    const { receiverId, message } = data;
+    io.to(receiverId).emit('receive_message', message);
+  });
+
+  // Handle typing status
+  socket.on('typing', (data) => {
+    const { receiverId, senderId } = data;
+    io.to(receiverId).emit('user_typing', { senderId });
+  });
+
   // Handle disconnection
   socket.on('disconnect', () => {
     // console.log('User disconnected');
@@ -116,6 +135,7 @@ app.use("/api", invoiceRoutes);
 app.use("/api", qrController);
 app.use("/api", adminDashboard);
 app.use("/", urlController);
+app.use("/api", chatAuth);
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
