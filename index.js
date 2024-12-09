@@ -62,7 +62,10 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*", // Be more specific in production
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    pingTimeout: 60000, // Add ping timeout
+    reconnection: true, // Enable reconnection
+    reconnectionAttempts: 5 // Set max reconnection attempts
   }
 });
 
@@ -90,27 +93,28 @@ io.on('connection', (socket) => {
     io.to(data.taskId).emit('new task message', data);
   });
 
-  // Join personal chat room
+  // Handle joining a personal chat room
   socket.on('join_chat', (userId) => {
     socket.join(userId);
-    // console.log(`User ${userId} joined their chat room`);
+    console.log(`User ${userId} joined their chat room`);
   });
 
-  // Handle private message
+  // Handle private message with acknowledgment
   socket.on('private_message', (data) => {
     const { receiverId, message } = data;
     io.to(receiverId).emit('receive_message', message);
+    // Send acknowledgment back to sender
+    socket.emit('message_sent', message);
   });
 
   // Handle typing status
   socket.on('typing', (data) => {
-    const { receiverId, senderId } = data;
-    io.to(receiverId).emit('user_typing', { senderId });
+    const { receiverId } = data;
+    socket.to(receiverId).emit('user_typing', data);
   });
 
-  // Handle disconnection
   socket.on('disconnect', () => {
-    // console.log('User disconnected');
+    console.log('User disconnected');
   });
 });
 

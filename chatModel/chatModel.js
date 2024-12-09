@@ -47,6 +47,57 @@ const chatSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    isEdited: {
+        type: Boolean,
+        default: false
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    clearedBy: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true
+        },
+        userType: {
+            type: String,
+            required: true,
+            enum: ['AdminUser', 'Employee', 'Client']
+        },
+        clearedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 });
 
-module.exports = mongoose.model('Chats', chatSchema);
+const userChatSettingsSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+    },
+    otherUserId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+    },
+    userType: {
+        type: String,
+        required: true,
+        enum: ['AdminUser', 'Employee', 'Client']
+    },
+    backgroundColor: {
+        type: String,
+        default: '#efeae2'
+    },
+    backgroundImage: {
+        type: String
+    }
+});
+
+const UserChatSettings = mongoose.model('UserChatSettings', userChatSettingsSchema);
+
+module.exports = { 
+    Chat: mongoose.model('Chats', chatSchema),
+    UserChatSettings
+};

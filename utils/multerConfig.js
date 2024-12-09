@@ -97,6 +97,8 @@ const chatStorage = multer.diskStorage({
       uploadPath = './uploads/chat/videos';
     } else if (file.fieldname === 'audio' || file.fieldname === 'recording') {
       uploadPath = './uploads/chat/audio';
+    } else if (file.fieldname === 'backgroundImage') {
+      uploadPath = './uploads/chat/backgrounds';
     }
     cb(null, uploadPath);
   },
@@ -153,7 +155,8 @@ const uploadChat = multer({
   { name: 'images', maxCount: 5 },
   { name: 'video', maxCount: 1 },
   { name: 'audio', maxCount: 1 },
-  { name: 'recording', maxCount: 1 }
+  { name: 'recording', maxCount: 1 },
+  { name: 'backgroundImage', maxCount: 1 }
 ]);
 
 module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile, uploadChat }
