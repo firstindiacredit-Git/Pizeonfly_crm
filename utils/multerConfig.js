@@ -3,7 +3,7 @@ const path = require('path');
 
 // File filter to check the allowed file types
 const fileFilter = (req, file, cb) => {
-  const fileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|webp|svg|ico|json|txt|csv|json|xml|json5|json4|json3|json2|json1|json0/;
+  const fileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|webp|svg|ico|json|txt|csv|json|xml|json5|json4|json3|json2|json1|json0|mp3|mp4|wav|ogg|webm|avi|mov|mkv|mpeg|mpg|m4a|aac|oga|ogg|wav|webm/;
   const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = fileTypes.test(file.mimetype);
 
@@ -88,6 +88,24 @@ const profileStorage = multer.diskStorage({
   }
 });
 
+const chatStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    let uploadPath = './uploads/chat';
+    if (file.fieldname === 'images') {
+      uploadPath = './uploads/chat/images';
+    } else if (file.fieldname === 'video') {
+      uploadPath = './uploads/chat/videos';
+    } else if (file.fieldname === 'audio' || file.fieldname === 'recording') {
+      uploadPath = './uploads/chat/audio';
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
 const uploadEmployee = multer({
   storage: employeeStorage,
   fileFilter: fileFilter,
@@ -127,4 +145,15 @@ const uploadProfile = multer({
   limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
 
-module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile }
+const uploadChat = multer({
+  storage: chatStorage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
+}).fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'video', maxCount: 1 },
+  { name: 'audio', maxCount: 1 },
+  { name: 'recording', maxCount: 1 }
+]);
+
+module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile, uploadChat }

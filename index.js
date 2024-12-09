@@ -93,7 +93,7 @@ io.on('connection', (socket) => {
   // Join personal chat room
   socket.on('join_chat', (userId) => {
     socket.join(userId);
-    console.log(`User ${userId} joined their chat room`);
+    // console.log(`User ${userId} joined their chat room`);
   });
 
   // Handle private message

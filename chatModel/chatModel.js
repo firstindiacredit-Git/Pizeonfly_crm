@@ -23,7 +23,6 @@ const chatSchema = new mongoose.Schema({
     },
     message: {
         type: String,
-        required: true
     },
     imageUrls: [{
         type: String
