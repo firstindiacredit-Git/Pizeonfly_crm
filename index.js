@@ -19,6 +19,8 @@ const adminDashboard = require("./userController/adminDashboard");
 const chatAuth = require("./chatController/chatAuth");
 const http = require('http');
 const { Server } = require("socket.io");
+const { UserStatus } = require("./chatModel/chatModel");
+
 
 const cors = require("cors");
 const path = require("path");
@@ -96,7 +98,7 @@ io.on('connection', (socket) => {
   // Handle joining a personal chat room
   socket.on('join_chat', (userId) => {
     socket.join(userId);
-    console.log(`User ${userId} joined their chat room`);
+    // console.log(`User ${userId} joined their chat room`);
   });
 
   // Handle private message with acknowledgment
@@ -113,8 +115,50 @@ io.on('connection', (socket) => {
     socket.to(receiverId).emit('user_typing', data);
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
+  socket.on('user_connected', async (userData) => {
+    try {
+      const socketId = socket.id;
+      await UserStatus.findOneAndUpdate(
+        { userId: userData.userId },
+        {
+          userId: userData.userId,
+          userType: userData.userType,
+          isOnline: true,
+          lastSeen: new Date(),
+          socketId: socketId
+        },
+        { upsert: true, new: true }
+      );
+
+      // Broadcast the status change to all connected clients
+      io.emit('user_status_changed', {
+        userId: userData.userId,
+        isOnline: true,
+        lastSeen: new Date()
+      });
+    } catch (error) {
+      console.error('Error updating user status:', error);
+    }
+  });
+
+  socket.on('disconnect', async () => {
+    try {
+      const user = await UserStatus.findOne({ socketId: socket.id });
+      if (user) {
+        user.isOnline = false;
+        user.lastSeen = new Date();
+        await user.save();
+
+        // Broadcast the status change
+        io.emit('user_status_changed', {
+          userId: user.userId,
+          isOnline: false,
+          lastSeen: user.lastSeen
+        });
+      }
+    } catch (error) {
+      console.error('Error updating user status on disconnect:', error);
+    }
   });
 });
 

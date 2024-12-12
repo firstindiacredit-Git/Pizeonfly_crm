@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Chat, UserChatSettings } = require('../chatModel/chatModel');
+const { Chat, UserChatSettings, UserStatus } = require('../chatModel/chatModel');
 const { uploadChat } = require('../utils/multerConfig');
 
 // Create new chat message
@@ -255,6 +255,16 @@ router.get('/getChatSettings/:userId/:otherUserId', async (req, res) => {
         res.status(200).json(chatSettings || { backgroundColor: '#efeae2' });
     } catch (error) {
         console.error('Get chat settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add new route for getting user status
+router.get('/getUserStatus/:userId', async (req, res) => {
+    try {
+        const status = await UserStatus.findOne({ userId: req.params.userId });
+        res.status(200).json(status || { isOnline: false });
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });

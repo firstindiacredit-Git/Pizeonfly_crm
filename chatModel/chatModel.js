@@ -97,7 +97,33 @@ const userChatSettingsSchema = new mongoose.Schema({
 
 const UserChatSettings = mongoose.model('UserChatSettings', userChatSettingsSchema);
 
-module.exports = { 
+const userStatusSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+    },
+    userType: {
+        type: String,
+        required: true,
+        enum: ['AdminUser', 'Employee', 'Client']
+    },
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
+    lastSeen: {
+        type: Date,
+        default: Date.now
+    },
+    socketId: {
+        type: String
+    }
+});
+
+const UserStatus = mongoose.model('UserStatus', userStatusSchema);
+
+module.exports = {
     Chat: mongoose.model('Chats', chatSchema),
-    UserChatSettings
+    UserChatSettings,
+    UserStatus
 };
