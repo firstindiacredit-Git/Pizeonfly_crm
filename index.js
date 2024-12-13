@@ -17,6 +17,7 @@ const urlController = require("./controller/urlShortner");
 const qrController = require("./controller/qrRoutes");
 const adminDashboard = require("./userController/adminDashboard");
 const chatAuth = require("./chatController/chatAuth");
+const groupAuth = require("./chatController/groupAuth");
 const http = require('http');
 const { Server } = require("socket.io");
 const { UserStatus } = require("./chatModel/chatModel");
@@ -115,6 +116,14 @@ io.on('connection', (socket) => {
     socket.to(receiverId).emit('user_typing', data);
   });
 
+  socket.on('join_group', (groupId) => {
+    socket.join(groupId);
+  });
+
+  socket.on('group_message', (data) => {
+    io.to(data.groupId).emit('receive_group_message', data.message);
+  });
+
   socket.on('user_connected', async (userData) => {
     try {
       const socketId = socket.id;
@@ -184,6 +193,7 @@ app.use("/api", qrController);
 app.use("/api", adminDashboard);
 app.use("/", urlController);
 app.use("/api", chatAuth);
+app.use("/api", groupAuth);
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
