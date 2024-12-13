@@ -88,6 +88,16 @@ const profileStorage = multer.diskStorage({
   }
 });
 
+const invoiceStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads/invoice-logo');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + file.originalname;
+    cb(null, file.fieldname + '-' + uniqueSuffix);
+  }
+});
+
 const chatStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath = './uploads/chat';
@@ -146,6 +156,13 @@ const uploadProfile = multer({
   fileFilter: fileFilter,
   limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
+
+const uploadInvoice = multer({
+  storage: invoiceStorage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
+});
+
 
 const uploadChat = multer({
   storage: chatStorage,
