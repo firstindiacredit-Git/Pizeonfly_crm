@@ -20,8 +20,7 @@ const invoiceSchema = new Schema({
         required: true
     },
     clientDetail: {
-        type: Schema.Types.ObjectId,
-        ref: "Client",
+        type: String,
         required: true
     },
     country: {
