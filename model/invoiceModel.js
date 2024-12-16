@@ -15,6 +15,11 @@ const invoiceSchema = new Schema({
         type: Date,
         required: true
     },
+    logo: {
+        type: String,
+        required: false,
+        default: null
+    },
     billedBy: {
         type: String,
         required: true

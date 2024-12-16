@@ -1,14 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const Invoice = require('../model/invoiceModel');
+const { uploadInvoice } = require('../utils/multerConfig');
 
-// Create a new invoice
-router.post('/invoices', async (req, res) => {
+// Create a new invoice with logo upload
+router.post('/invoices', uploadInvoice.single('logo'), async (req, res) => {
     try {
-        const newInvoice = new Invoice(req.body);
+        // Parse the JSON data from the request
+        const invoiceData = JSON.parse(req.body.data);
+
+        // If a file was uploaded, add the file path
+        if (req.file) {
+            invoiceData.logo = req.file.path;
+        }
+
+        const newInvoice = new Invoice(invoiceData);
         const savedInvoice = await newInvoice.save();
         res.status(201).json(savedInvoice);
     } catch (error) {
+        console.error('Error creating invoice:', error);
         res.status(400).json({ message: error.message });
     }
 });
