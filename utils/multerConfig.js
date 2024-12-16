@@ -176,4 +176,4 @@ const uploadChat = multer({
   { name: 'backgroundImage', maxCount: 1 }
 ]);
 
-module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile, uploadChat }
+module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile, uploadChat, uploadInvoice }
