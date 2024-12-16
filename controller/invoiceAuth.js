@@ -85,5 +85,19 @@ router.delete('/invoices/:id', async (req, res) => {
     }
 });
 
+// Get unique logos from all invoices
+router.get('/invoice-logos', async (req, res) => {
+    try {
+        // Get unique logos from all invoices
+        const logos = await Invoice.distinct('logo');
+        // Filter out null/empty values and return as an array
+        const validLogos = logos.filter(logo => logo != null && logo !== '');
+        res.json(validLogos || []); // Ensure we always return an array
+    } catch (error) {
+        console.error('Error fetching logos:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 module.exports = router;
 
