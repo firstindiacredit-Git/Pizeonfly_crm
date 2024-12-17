@@ -9,10 +9,12 @@ router.post('/invoices', uploadInvoice.single('logo'), async (req, res) => {
         // Parse the JSON data from the request
         const invoiceData = JSON.parse(req.body.data);
 
-        // If a file was uploaded, add the file path
+        // If a new file was uploaded, use the file path
         if (req.file) {
             invoiceData.logo = req.file.path;
         }
+        // If no new file but logo path exists in data, keep using that
+        // (no need to modify as it's already in invoiceData)
 
         const newInvoice = new Invoice(invoiceData);
         const savedInvoice = await newInvoice.save();
@@ -88,11 +90,23 @@ router.delete('/invoices/:id', async (req, res) => {
 // Get unique logos from all invoices
 router.get('/invoice-logos', async (req, res) => {
     try {
+        // Define default logos that should always be available
+        const defaultLogos = [
+            'uploads/a2zlogo.png',
+            'uploads/ficlogo.png',
+            'uploads/pizeonflylogo.png'
+        ];
+
         // Get unique logos from all invoices
-        const logos = await Invoice.distinct('logo');
-        // Filter out null/empty values and return as an array
-        const validLogos = logos.filter(logo => logo != null && logo !== '');
-        res.json(validLogos || []); // Ensure we always return an array
+        const dbLogos = await Invoice.distinct('logo');
+        
+        // Filter out null/empty values from database logos
+        const validDbLogos = dbLogos.filter(logo => logo != null && logo !== '');
+        
+        // Combine default logos with database logos and remove duplicates
+        const allLogos = [...new Set([...defaultLogos, ...validDbLogos])];
+        
+        res.json(allLogos);
     } catch (error) {
         console.error('Error fetching logos:', error);
         res.status(500).json({ message: error.message });
