@@ -21,8 +21,10 @@ const adminDashSchema = new Schema({
     todoColor: {
         type: String,
     },
-    excelSheetColor: {
-        type: String,
+    excelSheetColors: {
+        type: Map,
+        of: String,
+        default: new Map()
     }
 }, {
     timestamps: true

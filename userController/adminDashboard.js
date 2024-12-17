@@ -260,14 +260,14 @@ router.get('/adminColors/:email', async (req, res) => {
             return res.json({
                 notepadColor: '#fff3cd',
                 todoColor: '#cfe2ff',
-                excelSheetColor: '#d4edda'
+                excelSheetColors: {}
             });
         }
         
         res.json({
             notepadColor: adminDash.notepadColor || '#fff3cd',
             todoColor: adminDash.todoColor || '#cfe2ff',
-            excelSheetColor: adminDash.excelSheetColor || '#d4edda'
+            excelSheetColors: adminDash.excelSheetColors || {}
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -276,7 +276,7 @@ router.get('/adminColors/:email', async (req, res) => {
 
 router.put('/adminColors/:email', async (req, res) => {
     try {
-        const { notepadColor, todoColor, excelSheetColor } = req.body;
+        const { notepadColor, todoColor, excelSheetColors } = req.body;
         
         const updatedDash = await AdminDash.findOneAndUpdate(
             { email: req.params.email },
@@ -284,7 +284,7 @@ router.put('/adminColors/:email', async (req, res) => {
                 $set: { 
                     notepadColor,
                     todoColor,
-                    excelSheetColor
+                    excelSheetColors
                 } 
             },
             { new: true, upsert: true }
@@ -293,7 +293,7 @@ router.put('/adminColors/:email', async (req, res) => {
         res.json({
             notepadColor: updatedDash.notepadColor,
             todoColor: updatedDash.todoColor,
-            excelSheetColor: updatedDash.excelSheetColor
+            excelSheetColors: updatedDash.excelSheetColors
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
