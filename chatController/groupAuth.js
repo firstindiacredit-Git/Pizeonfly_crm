@@ -249,11 +249,86 @@ router.post('/addGroupMembers', async (req, res) => {
             )
         );
 
-        group.members.push(...uniqueNewMembers);
+        if (uniqueNewMembers.length === 0) {
+            return res.status(400).json({ error: 'Selected members are already in the group' });
+        }
+
+        // Add new members with their userType
+        group.members.push(...uniqueNewMembers.map(member => ({
+            userId: member.userId,
+            userType: member.type // Make sure to include userType
+        })));
+
         await group.save();
 
-        res.status(200).json(group);
+        // Fetch and process complete member details
+        const membersData = await Promise.all(group.members.map(async (member) => {
+            let user;
+            switch (member.userType) {
+                case 'Employee':
+                    user = await mongoose.model('Employee').findById(member.userId)
+                        .select('employeeName emailid phone department designation joiningDate employeeId employeeImage');
+                    if (user) {
+                        return {
+                            userId: user._id,
+                            userType: member.userType,
+                            name: user.employeeName,
+                            email: user.emailid,
+                            phone: user.phone,
+                            department: user.department,
+                            designation: user.designation,
+                            joinDate: user.joiningDate,
+                            employeeId: user.employeeId,
+                            employeeImage: user.employeeImage
+                        };
+                    }
+                    break;
+
+                case 'Client':
+                    user = await mongoose.model('Client').findById(member.userId)
+                        .select('clientName businessName clientEmail clientPhone clientImage');
+                    if (user) {
+                        return {
+                            userId: user._id,
+                            userType: member.userType,
+                            name: user.clientName,
+                            businessName: user.businessName,
+                            email: user.clientEmail,
+                            phone: user.clientPhone,
+                            image: user.clientImage
+                        };
+                    }
+                    break;
+
+                case 'AdminUser':
+                    user = await mongoose.model('AdminUser').findById(member.userId)
+                        .select('username email profileImage');
+                    if (user) {
+                        return {
+                            userId: user._id,
+                            userType: member.userType,
+                            name: user.username,
+                            email: user.email,
+                            profileImage: user.profileImage
+                        };
+                    }
+                    break;
+            }
+            return null;
+        }));
+
+        // Filter out null values and prepare response
+        const validMembers = membersData.filter(member => member !== null);
+        const updatedGroup = {
+            _id: group._id,
+            name: group.name,
+            createdAt: group.createdAt,
+            members: validMembers
+        };
+
+        res.status(200).json(updatedGroup);
     } catch (error) {
+        console.error('Error adding members:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -273,8 +348,13 @@ router.post('/removeGroupMember', async (req, res) => {
         );
         await group.save();
 
-        res.status(200).json(group);
+        // Fetch complete group details with member information
+        const updatedGroup = await Group.findById(groupId);
+        const processedGroup = await processGroupMembers(updatedGroup);
+
+        res.status(200).json(processedGroup);
     } catch (error) {
+        console.error('Error removing member:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -297,6 +377,39 @@ router.get('/groupDetails/:groupId', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Helper function to process group members
+async function processGroupMembers(group) {
+    const membersData = await Promise.all(group.members.map(async (member) => {
+        let user;
+        switch (member.userType) {
+            case 'Employee':
+                user = await mongoose.model('Employee').findById(member.userId)
+                    .select('employeeName emailid phone department designation joiningDate employeeId employeeImage');
+                if (user) {
+                    return {
+                        userId: user._id,
+                        userType: member.userType,
+                        name: user.employeeName,
+                        email: user.emailid,
+                        employeeImage: user.employeeImage
+                    };
+                }
+                break;
+            // ... similar cases for Client and AdminUser
+        }
+        return null;
+    }));
+
+    const validMembers = membersData.filter(member => member !== null);
+
+    return {
+        _id: group._id,
+        name: group.name,
+        createdAt: group.createdAt,
+        members: validMembers
+    };
+}
 
 module.exports = router;
 

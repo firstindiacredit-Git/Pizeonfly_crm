@@ -12,7 +12,7 @@ const groupSchema = new mongoose.Schema({
         },
         userType: {
             type: String,
-            required: true,
+            // required: true,
             enum: ['AdminUser', 'Employee', 'Client']
         }
     }],
