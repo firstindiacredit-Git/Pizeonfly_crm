@@ -411,5 +411,66 @@ async function processGroupMembers(group) {
     };
 }
 
+// Add this new route after existing routes
+router.post('/removeGroupMembers', async (req, res) => {
+    try {
+        const { groupId, memberIds } = req.body;
+        const group = await Group.findById(groupId);
+        
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Remove selected members
+        group.members = group.members.filter(member => 
+            !memberIds.includes(member.userId.toString())
+        );
+        
+        await group.save();
+
+        // Fetch and process complete member details
+        const membersData = await Promise.all(group.members.map(async (member) => {
+            let user;
+            switch (member.userType) {
+                case 'Employee':
+                    user = await mongoose.model('Employee').findById(member.userId)
+                        .select('employeeName emailid phone department designation joiningDate employeeId employeeImage');
+                    if (user) {
+                        return {
+                            userId: user._id,
+                            userType: member.userType,
+                            name: user.employeeName,
+                            email: user.emailid,
+                            phone: user.phone,
+                            department: user.department,
+                            designation: user.designation,
+                            joinDate: user.joiningDate,
+                            employeeId: user.employeeId,
+                            employeeImage: user.employeeImage
+                        };
+                    }
+                    break;
+                // ... other cases remain the same
+            }
+            return null;
+        }));
+
+        const validMembers = membersData.filter(member => member !== null);
+        const updatedGroup = {
+            _id: group._id,
+            name: group.name,
+            createdAt: group.createdAt,
+            members: validMembers
+        };
+
+        res.status(200).json(updatedGroup);
+    } catch (error) {
+        console.error('Error removing members:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
 module.exports = router;
 
