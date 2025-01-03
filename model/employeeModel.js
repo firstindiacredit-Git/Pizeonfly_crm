@@ -24,6 +24,8 @@ const employeeSchema = new Schema({
     },
     employeeId: {
         type: String,
+        required: true,
+        unique: true
     },
     joiningDate: {
         type: Date,
