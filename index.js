@@ -18,6 +18,7 @@ const qrController = require("./controller/qrRoutes");
 const adminDashboard = require("./userController/adminDashboard");
 const chatAuth = require("./chatController/chatAuth");
 const groupAuth = require("./chatController/groupAuth");
+const meetingController = require("./controller/meetingScheuler");
 const http = require('http');
 const { Server } = require("socket.io");
 const { UserStatus } = require("./chatModel/chatModel");
@@ -194,6 +195,7 @@ app.use("/api", adminDashboard);
 app.use("/", urlController);
 app.use("/api", chatAuth);
 app.use("/api", groupAuth);
+app.use("/api", meetingController);
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
