@@ -169,12 +169,16 @@ router.get('/groups', async (req, res) => {
             // Filter out null values
             const validMembers = membersData.filter(member => member !== null);
 
+            // Get last message details
+            const lastMessage = group.lastMessage || null;
+
             return {
                 _id: group._id,
                 name: group.name,
                 createdAt: group.createdAt,
                 totalMembers: validMembers.length,
-                members: validMembers
+                members: validMembers,
+                lastMessage: lastMessage // Include lastMessage in response
             };
         }));
 
@@ -195,24 +199,91 @@ router.post('/sendGroupMessage', async (req, res) => {
             return res.status(404).json({ error: 'Group not found' });
         }
 
+        // Get sender details based on senderType
+        let senderDetails;
+        switch (senderType) {
+            case 'AdminUser':
+                senderDetails = await mongoose.model('AdminUser')
+                    .findById(senderId)
+                    .select('username email profileImage');
+                if (senderDetails) {
+                    senderDetails = {
+                        name: senderDetails.username,
+                        email: senderDetails.email,
+                        image: senderDetails.profileImage
+                    };
+                }
+                break;
+            case 'Employee':
+                senderDetails = await mongoose.model('Employee')
+                    .findById(senderId)
+                    .select('employeeName emailid employeeImage');
+                if (senderDetails) {
+                    senderDetails = {
+                        name: senderDetails.employeeName,
+                        email: senderDetails.emailid,
+                        image: senderDetails.employeeImage
+                    };
+                }
+                break;
+            case 'Client':
+                senderDetails = await mongoose.model('Client')
+                    .findById(senderId)
+                    .select('clientName clientEmail clientImage');
+                if (senderDetails) {
+                    senderDetails = {
+                        name: senderDetails.clientName,
+                        email: senderDetails.clientEmail,
+                        image: senderDetails.clientImage
+                    };
+                }
+                break;
+        }
+
+        // Create new chat message with sender details
         const newChat = new Chat({
             senderId,
             senderType,
             receiverId: groupId,
             receiverType: 'Group',
-            message
+            message,
+            senderDetails // Add sender details to the message
         });
 
         const savedChat = await newChat.save();
 
-        // Emit message to all group members
+        // Update group's lastMessage
+        group.lastMessage = {
+            message: message,
+            sender: {
+                id: senderId,
+                name: senderDetails.name,
+                type: senderType,
+                image: senderDetails.image
+            },
+            timestamp: new Date()
+        };
+
+        await group.save();
+
+        // Emit message to all group members with sender details
         const io = req.app.get('io');
         group.members.forEach(member => {
-            io.to(member.userId.toString()).emit('receive_group_message', savedChat);
+            io.to(member.userId.toString()).emit('receive_group_message', {
+                ...savedChat.toObject(),
+                senderDetails
+            });
         });
 
-        res.status(201).json(savedChat);
+        // Also emit group update to refresh the groups list
+        io.emit('group_updated', group);
+
+        res.status(201).json({
+            ...savedChat.toObject(),
+            senderDetails
+        });
     } catch (error) {
+        console.error('Error in sendGroupMessage:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -220,17 +291,76 @@ router.post('/sendGroupMessage', async (req, res) => {
 // Get group messages
 router.get('/getGroupMessages/:groupId', async (req, res) => {
     try {
+        const groupId = req.params.groupId;
         const messages = await Chat.find({
-            receiverId: req.params.groupId,
+            receiverId: groupId,
             receiverType: 'Group'
         }).sort({ createdAt: 1 });
-        res.status(200).json(messages);
+
+        const processedMessages = await Promise.all(
+            messages.map(async (message) => {
+                let senderDetails = null;
+
+                try {
+                    if (message.senderType === 'AdminUser') {
+                        const admin = await mongoose.model('AdminUser').findById(message.senderId);
+                        if (admin) {
+                            senderDetails = {
+                                name: admin.username,
+                                email: admin.email,
+                                image: admin.profileImage?.replace('uploads/', ''),
+                                type: 'AdminUser'
+                            };
+                        }
+                    } 
+                    else if (message.senderType === 'Employee') {
+                        const employee = await mongoose.model('Employee').findById(message.senderId);
+                        if (employee) {
+                            senderDetails = {
+                                name: employee.employeeName,
+                                email: employee.emailid,
+                                image: employee.employeeImage?.replace('uploads/', ''),
+                                type: 'Employee'
+                            };
+                        }
+                    } 
+                    else if (message.senderType === 'Client') {
+                        const client = await mongoose.model('Client').findById(message.senderId);
+                        if (client) {
+                            senderDetails = {
+                                name: client.clientName,
+                                email: client.clientEmail,
+                                image: client.clientImage?.replace('uploads/', ''),
+                                type: 'Client'
+                            };
+                        }
+                    }
+
+                    // Debug logging
+                    // console.log(`Sender Type: ${message.senderType}`);
+                    // console.log('Sender Details:', senderDetails);
+
+                    return {
+                        ...message.toObject(),
+                        senderDetails: senderDetails
+                    };
+
+                } catch (err) {
+                    console.error(`Error fetching sender details:`, err);
+                    return {
+                        ...message.toObject(),
+                        senderDetails: null
+                    };
+                }
+            })
+        );
+
+        res.status(200).json(processedMessages);
     } catch (error) {
+        console.error('Error in getGroupMessages:', error);
         res.status(500).json({ error: error.message });
     }
 });
-
-// Add new endpoints for group management
 
 // Add members to group
 router.post('/addGroupMembers', async (req, res) => {

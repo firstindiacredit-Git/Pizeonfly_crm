@@ -19,7 +19,7 @@ const chatSchema = new mongoose.Schema({
     receiverType: {
         type: String,
         required: true,
-        enum: ['AdminUser', 'Employee', 'Client']
+        enum: ['AdminUser', 'Employee', 'Client', 'Group']
     },
     message: {
         type: String,
