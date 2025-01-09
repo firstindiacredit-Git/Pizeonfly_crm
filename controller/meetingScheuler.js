@@ -390,4 +390,146 @@ router.delete('/meetings/:id', async (req, res) => {
   }
 });
 
+// Add new route for updating meetings
+router.put('/meetings/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const meeting = await Meeting.findById(id);
+    if (!meeting) {
+      return res.status(404).json({ success: false, error: 'Meeting not found' });
+    }
+
+    // Store old date/time for notification
+    const oldDate = meeting.date;
+    const oldTime = meeting.startTime;
+
+    // If date or time is changed, status automatically set to rescheduled
+    if (updateData.date !== meeting.date || updateData.startTime !== meeting.startTime) {
+      updateData.status = 'rescheduled';
+    }
+
+    // Update meeting
+    Object.assign(meeting, updateData);
+    await meeting.save();
+
+    // Send rescheduling notifications
+    if (meeting.status === 'rescheduled') {
+      await Promise.all([
+        sendReschedulingEmail(meeting, oldDate, oldTime),
+        sendReschedulingSMS(meeting, oldDate, oldTime),
+        sendReschedulingWhatsApp(meeting, oldDate, oldTime)
+      ]);
+    }
+
+    res.status(200).json({ success: true, meeting });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Add new notification functions for rescheduling
+async function sendReschedulingEmail(meeting, oldDate, oldTime) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.USER_EMAIL,
+      pass: process.env.USER_PASSWORD
+    },
+  });
+
+  const oldDateTime = `${new Date(oldDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })} at ${oldTime}`;
+
+  const newDateTime = `${new Date(meeting.date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })} at ${meeting.startTime}`;
+
+  const mailOptions = {
+    from: process.env.USER_EMAIL,
+    to: meeting.guestEmail,
+    subject: `Meeting Rescheduled: ${meeting.title}`,
+    html: `
+      <h1>Meeting Rescheduled</h1>
+      <p>Dear ${meeting.guestName},</p>
+      <p>Your meeting "${meeting.title}" has been rescheduled.</p>
+      <p><strong>From:</strong> ${oldDateTime}</p>
+      <p><strong>To:</strong> ${newDateTime}</p>
+      <p><strong>Duration:</strong> ${meeting.duration} minutes</p>
+      <p><strong>Status:</strong> Rescheduled</p>
+      ${meeting.description ? `<p><strong>Description:</strong> ${meeting.description}</p>` : ''}
+      <p>If you have any questions, please contact us.</p>
+      <p>Thank you for your understanding!</p>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending rescheduling email:', error);
+  }
+}
+
+async function sendReschedulingSMS(meeting, oldDate, oldTime) {
+  try {
+    const formattedPhone = meeting.guestPhone.startsWith('+') 
+      ? meeting.guestPhone 
+      : `+91${meeting.guestPhone}`;
+
+    const message = `
+Meeting Rescheduled: "${meeting.title}"
+Status: Rescheduled
+New Date: ${new Date(meeting.date).toLocaleDateString()}
+New Time: ${meeting.startTime}
+Duration: ${meeting.duration} minutes
+Thank you for your understanding.`;
+
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: formattedPhone
+    });
+  } catch (error) {
+    console.error('Error sending rescheduling SMS:', error);
+  }
+}
+
+async function sendReschedulingWhatsApp(meeting, oldDate, oldTime) {
+  try {
+    const formattedPhone = meeting.guestPhone.startsWith('+') 
+      ? meeting.guestPhone 
+      : `+91${meeting.guestPhone}`;
+
+    const message = `
+Hello ${meeting.guestName}! 👋
+
+Your meeting has been rescheduled ⏰
+
+*Meeting Details:*
+📌 Title: ${meeting.title}
+📅 New Date: ${new Date(meeting.date).toLocaleDateString()}
+⏰ New Time: ${meeting.startTime}
+⏱️ Duration: ${meeting.duration} minutes
+📊 Status: Rescheduled
+
+Thank you for your understanding! If you have any questions, please contact us.`;
+
+    await twilioClient.messages.create({
+      body: message,
+      from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+      to: `whatsapp:${formattedPhone}`
+    });
+  } catch (error) {
+    console.error('Error sending WhatsApp rescheduling message:', error);
+  }
+}
+
 module.exports = router;
