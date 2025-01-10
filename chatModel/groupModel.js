@@ -13,8 +13,14 @@ const groupSchema = new mongoose.Schema({
         userType: {
             type: String,
             enum: ['AdminUser', 'Employee', 'Client']
-        }
+        },
+        name: String
     }],
+    createdBy: {
+        userId: mongoose.Schema.Types.ObjectId,
+        userType: String,
+        name: String
+    },
     lastMessage: {
         message: String,
         sender: {

@@ -7,64 +7,75 @@ const mongoose = require('mongoose');
 // Create group
 router.post('/createGroup', async (req, res) => {
     try {
-        const { name, members } = req.body;
+        const { name, members, createdBy } = req.body;
         
-        // console.log('Received request data:', { name, members });
+        // console.log('Received request data:', { name, members, createdBy });
 
-        // Validate members data
         if (!Array.isArray(members) || members.length === 0) {
             return res.status(400).json({ error: 'Members array is required and cannot be empty' });
         }
 
-        // First fetch all members' data
+        // Create group with creator information
+        const newGroup = new Group({
+            name,
+            members: members.map(member => ({
+                userId: member.userId,
+                userType: member.type,
+                name: member.name
+            })),
+            createdBy: {
+                userId: createdBy.userId,
+                userType: createdBy.type,
+                name: createdBy.name
+            },
+            createdAt: new Date()
+        });
+        
+        const savedGroup = await newGroup.save();
+
+        // Fetch complete member details for response
         const membersData = await Promise.all(members.map(async (member) => {
             let user;
-            switch (member.userType) {
-                case 'Employee':
-                    user = await mongoose.model('Employee').findById(member.userId)
-                        .select('employeeName emailid phone department designation joiningDate employeeId employeeImage');
-                    if (user) {
-                        return {
-                            userId: user._id,
-                            userType: member.userType,
-                            name: user.employeeName,
-                            email: user.emailid,
-                            phone: user.phone,
-                            department: user.department,
-                            designation: user.designation,
-                            joinDate: user.joiningDate,
-                            employeeId: user.employeeId,
-                            employeeImage: user.employeeImage
-                        };
-                    }
-                    break;
-
-                case 'Client':
-                    user = await mongoose.model('Client').findById(member.userId)
-                        .select('clientName businessName clientEmail clientPhone clientImage');
-                    if (user) {
-                        return {
-                            userId: user._id,
-                            userType: member.userType,
-                            name: user.clientName,
-                            businessName: user.businessName,
-                            email: user.clientEmail,
-                            phone: user.clientPhone,
-                            image: user.clientImage
-                        };
-                    }
-                    break;
-
+            switch (member.type) {
                 case 'AdminUser':
                     user = await mongoose.model('AdminUser').findById(member.userId)
                         .select('username email profileImage');
                     if (user) {
                         return {
                             userId: user._id,
-                            userType: member.userType,
+                            userType: 'AdminUser',
                             name: user.username,
                             email: user.email,
+                            image: user.profileImage,
                             profileImage: user.profileImage
+                        };
+                    }
+                    break;
+                case 'Employee':
+                    user = await mongoose.model('Employee').findById(member.userId)
+                        .select('employeeName emailid employeeImage');
+                    if (user) {
+                        return {
+                            userId: user._id,
+                            userType: 'Employee',
+                            name: user.employeeName,
+                            email: user.emailid,
+                            image: user.employeeImage,
+                            employeeImage: user.employeeImage
+                        };
+                    }
+                    break;
+                case 'Client':
+                    user = await mongoose.model('Client').findById(member.userId)
+                        .select('clientName clientEmail clientImage');
+                    if (user) {
+                        return {
+                            userId: user._id,
+                            userType: 'Client',
+                            name: user.clientName,
+                            email: user.clientEmail,
+                            image: user.clientImage,
+                            clientImage: user.clientImage
                         };
                     }
                     break;
@@ -72,30 +83,33 @@ router.post('/createGroup', async (req, res) => {
             return null;
         }));
 
-        // Filter out any null values
         const validMembers = membersData.filter(member => member !== null);
 
-        if (validMembers.length === 0) {
-            return res.status(404).json({ error: 'No valid members found' });
+        // Get creator details
+        let creatorDetails = null;
+        if (createdBy.type === 'AdminUser') {
+            const admin = await mongoose.model('AdminUser').findById(createdBy.userId)
+                .select('username email profileImage');
+            if (admin) {
+                creatorDetails = {
+                    userId: admin._id,
+                    userType: 'AdminUser',
+                    name: admin.username,
+                    email: admin.email,
+                    image: admin.profileImage,
+                    profileImage: admin.profileImage
+                };
+            }
         }
 
-        // Create group with original member format
-        const newGroup = new Group({
-            name,
-            members: members
-        });
-        
-        const savedGroup = await newGroup.save();
-
         const response = {
-            groupName: savedGroup.name,
-            groupId: savedGroup._id,
+            _id: savedGroup._id,
+            name: savedGroup.name,
+            createdBy: creatorDetails || createdBy,
             createdAt: savedGroup.createdAt,
-            totalMembers: validMembers.length,
             members: validMembers
         };
 
-        // console.log('Final Response:', response);
         res.status(201).json(response);
 
     } catch (error) {
@@ -114,6 +128,21 @@ router.get('/groups', async (req, res) => {
             const membersData = await Promise.all(group.members.map(async (member) => {
                 let user;
                 switch (member.userType) {
+                    case 'AdminUser':
+                        user = await mongoose.model('AdminUser').findById(member.userId)
+                            .select('username email profileImage');
+                        if (user) {
+                            return {
+                                userId: user._id,
+                                userType: member.userType,
+                                name: user.username,
+                                email: user.email,
+                                image: user.profileImage,
+                                profileImage: user.profileImage
+                            };
+                        }
+                        break;
+
                     case 'Employee':
                         user = await mongoose.model('Employee').findById(member.userId)
                             .select('employeeName emailid phone department designation joiningDate employeeId employeeImage');
@@ -148,20 +177,6 @@ router.get('/groups', async (req, res) => {
                             };
                         }
                         break;
-
-                    case 'AdminUser':
-                        user = await mongoose.model('AdminUser').findById(member.userId)
-                            .select('username email profileImage');
-                        if (user) {
-                            return {
-                                userId: user._id,
-                                userType: member.userType,
-                                name: user.username,
-                                email: user.email,
-                                profileImage: user.profileImage
-                            };
-                        }
-                        break;
                 }
                 return null;
             }));
@@ -178,13 +193,14 @@ router.get('/groups', async (req, res) => {
                 createdAt: group.createdAt,
                 totalMembers: validMembers.length,
                 members: validMembers,
-                lastMessage: lastMessage // Include lastMessage in response
+                lastMessage,
+                createdBy: group.createdBy
             };
         }));
 
         res.status(200).json(processedGroups);
     } catch (error) {
-        console.error('Get groups error:', error);
+        console.error('Error fetching groups:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -603,4 +619,5 @@ router.post('/removeGroupMembers', async (req, res) => {
 
 
 module.exports = router;
+
 
