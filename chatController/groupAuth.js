@@ -484,7 +484,50 @@ router.post('/removeGroupMember', async (req, res) => {
     try {
         const { groupId, memberId } = req.body;
         
-        // Find and update the group document by pulling the member from the array
+        // Find the group
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Find the member's details before removing them
+        const memberToRemove = group.members.find(m => m.userId.toString() === memberId);
+        if (!memberToRemove) {
+            return res.status(404).json({ error: 'Member not found in group' });
+        }
+
+        // Get member's name based on their userType
+        let memberName;
+        switch (memberToRemove.userType) {
+            case 'AdminUser':
+                const admin = await mongoose.model('AdminUser').findById(memberId);
+                memberName = admin ? admin.username : memberToRemove.name;
+                break;
+            case 'Employee':
+                const employee = await mongoose.model('Employee').findById(memberId);
+                memberName = employee ? employee.employeeName : memberToRemove.name;
+                break;
+            case 'Client':
+                const client = await mongoose.model('Client').findById(memberId);
+                memberName = client ? client.clientName : memberToRemove.name;
+                break;
+            default:
+                memberName = memberToRemove.name;
+        }
+
+        // Create system message about member removal
+        const systemMessage = new Chat({
+            senderId: group.createdBy.userId,
+            senderType: group.createdBy.userType,
+            receiverId: groupId,
+            receiverType: 'Group',
+            message: `${memberName || 'Member'} was removed`,
+            isSystemMessage: true
+        });
+
+        await systemMessage.save();
+
+        // Remove member from group
         const updatedGroup = await Group.findByIdAndUpdate(
             groupId,
             { 
@@ -492,18 +535,19 @@ router.post('/removeGroupMember', async (req, res) => {
                     members: { userId: memberId }
                 }
             },
-            { new: true } // Return the updated document
+            { new: true }
         );
-
-        if (!updatedGroup) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
 
         // Get io instance from app
         const io = req.app.get('io');
         
-        // Emit socket event to notify the removed member
         if (io) {
+            // Emit system message to all group members
+            updatedGroup.members.forEach(member => {
+                io.to(member.userId.toString()).emit('receive_group_message', systemMessage);
+            });
+
+            // Notify removed member
             io.to(memberId.toString()).emit('member_removed_from_group', {
                 groupId: groupId,
                 memberId: memberId
@@ -620,5 +664,3 @@ async function processGroupMembers(group) {
 }
 
 module.exports = router;
-
-
