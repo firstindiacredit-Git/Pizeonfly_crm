@@ -245,17 +245,68 @@ router.post('/updateChatBackground', uploadChat, async (req, res) => {
     }
 });
 
-// Add this new route for getting chat settings
+// Get chat settings
 router.get('/getChatSettings/:userId/:otherUserId', async (req, res) => {
     try {
-        const chatSettings = await UserChatSettings.findOne({ 
-            userId: req.params.userId,
-            otherUserId: req.params.otherUserId
+        const { userId, otherUserId } = req.params;
+
+        // Validate that both IDs are provided and valid
+        if (!userId || !otherUserId || userId === 'undefined' || otherUserId === 'undefined') {
+            return res.status(400).json({ 
+                error: 'Invalid user IDs provided',
+                userId,
+                otherUserId 
+            });
+        }
+
+        const settings = await UserChatSettings.findOne({
+            userId: userId,
+            otherUserId: otherUserId
         });
-        res.status(200).json(chatSettings || { backgroundColor: '#efeae2' });
+
+        // If no settings exist, return default settings
+        if (!settings) {
+            return res.status(200).json({
+                userId: userId,
+                otherUserId: otherUserId,
+                isMuted: false,
+                isBlocked: false,
+                theme: 'light',
+                fontSize: 'medium'
+            });
+        }
+
+        res.status(200).json(settings);
     } catch (error) {
         console.error('Get chat settings error:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Error fetching chat settings' });
+    }
+});
+
+// Update chat settings
+router.post('/updateChatSettings', async (req, res) => {
+    try {
+        const { userId, otherUserId, settings } = req.body;
+
+        // Validate inputs
+        if (!userId || !otherUserId || userId === 'undefined' || otherUserId === 'undefined') {
+            return res.status(400).json({ 
+                error: 'Invalid user IDs provided',
+                userId,
+                otherUserId 
+            });
+        }
+
+        const updatedSettings = await UserChatSettings.findOneAndUpdate(
+            { userId, otherUserId },
+            { ...settings },
+            { new: true, upsert: true }
+        );
+
+        res.status(200).json(updatedSettings);
+    } catch (error) {
+        console.error('Update chat settings error:', error);
+        res.status(500).json({ error: 'Error updating chat settings' });
     }
 });
 

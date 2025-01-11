@@ -483,24 +483,86 @@ router.post('/addGroupMembers', async (req, res) => {
 router.post('/removeGroupMember', async (req, res) => {
     try {
         const { groupId, memberId } = req.body;
-        const group = await Group.findById(groupId);
         
-        if (!group) {
+        // Find and update the group document by pulling the member from the array
+        const updatedGroup = await Group.findByIdAndUpdate(
+            groupId,
+            { 
+                $pull: { 
+                    members: { userId: memberId }
+                }
+            },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedGroup) {
             return res.status(404).json({ error: 'Group not found' });
         }
 
-        group.members = group.members.filter(member => 
-            member.userId.toString() !== memberId
-        );
-        await group.save();
+        // Get io instance from app
+        const io = req.app.get('io');
+        
+        // Emit socket event to notify the removed member
+        if (io) {
+            io.to(memberId.toString()).emit('member_removed_from_group', {
+                groupId: groupId,
+                memberId: memberId
+            });
+        }
 
-        // Fetch complete group details with member information
-        const updatedGroup = await Group.findById(groupId);
-        const processedGroup = await processGroupMembers(updatedGroup);
+        res.status(200).json({
+            success: true,
+            message: 'Member removed successfully',
+            group: updatedGroup
+        });
 
-        res.status(200).json(processedGroup);
     } catch (error) {
         console.error('Error removing member:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Remove multiple members
+router.post('/removeGroupMembers', async (req, res) => {
+    try {
+        const { groupId, memberIds } = req.body;
+
+        // Find and update the group document by pulling all specified members
+        const updatedGroup = await Group.findByIdAndUpdate(
+            groupId,
+            { 
+                $pull: { 
+                    members: { userId: { $in: memberIds } }
+                }
+            },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedGroup) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Get io instance from app
+        const io = req.app.get('io');
+
+        // Emit socket event to notify all removed members
+        if (io) {
+            memberIds.forEach(memberId => {
+                io.to(memberId.toString()).emit('member_removed_from_group', {
+                    groupId: groupId,
+                    memberId: memberId
+                });
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Members removed successfully',
+            group: updatedGroup
+        });
+
+    } catch (error) {
+        console.error('Error removing members:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -556,67 +618,6 @@ async function processGroupMembers(group) {
         members: validMembers
     };
 }
-
-// Add this new route after existing routes
-router.post('/removeGroupMembers', async (req, res) => {
-    try {
-        const { groupId, memberIds } = req.body;
-        const group = await Group.findById(groupId);
-        
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
-
-        // Remove selected members
-        group.members = group.members.filter(member => 
-            !memberIds.includes(member.userId.toString())
-        );
-        
-        await group.save();
-
-        // Fetch and process complete member details
-        const membersData = await Promise.all(group.members.map(async (member) => {
-            let user;
-            switch (member.userType) {
-                case 'Employee':
-                    user = await mongoose.model('Employee').findById(member.userId)
-                        .select('employeeName emailid phone department designation joiningDate employeeId employeeImage');
-                    if (user) {
-                        return {
-                            userId: user._id,
-                            userType: member.userType,
-                            name: user.employeeName,
-                            email: user.emailid,
-                            phone: user.phone,
-                            department: user.department,
-                            designation: user.designation,
-                            joinDate: user.joiningDate,
-                            employeeId: user.employeeId,
-                            employeeImage: user.employeeImage
-                        };
-                    }
-                    break;
-                // ... other cases remain the same
-            }
-            return null;
-        }));
-
-        const validMembers = membersData.filter(member => member !== null);
-        const updatedGroup = {
-            _id: group._id,
-            name: group.name,
-            createdAt: group.createdAt,
-            members: validMembers
-        };
-
-        res.status(200).json(updatedGroup);
-    } catch (error) {
-        console.error('Error removing members:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
 
 module.exports = router;
 

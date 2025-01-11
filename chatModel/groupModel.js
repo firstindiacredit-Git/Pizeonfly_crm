@@ -14,7 +14,11 @@ const groupSchema = new mongoose.Schema({
             type: String,
             enum: ['AdminUser', 'Employee', 'Client']
         },
-        name: String
+        name: String,
+        isRemoved: {
+            type: Boolean,
+            default: false
+        }
     }],
     createdBy: {
         userId: mongoose.Schema.Types.ObjectId,
