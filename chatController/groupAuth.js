@@ -9,20 +9,29 @@ router.post('/createGroup', async (req, res) => {
     try {
         const { name, members, createdBy } = req.body;
         
-        // console.log('Received request data:', { name, members, createdBy });
+        // console.log('Creating group with:', { name, members, createdBy });
 
         if (!Array.isArray(members) || members.length === 0) {
             return res.status(400).json({ error: 'Members array is required and cannot be empty' });
         }
 
+        // Add this logic to include the creator as a member
+        const creatorMember = {
+            userId: createdBy.userId,
+            userType: createdBy.type,
+            name: createdBy.name
+        };
+
+        // Include the creator member in the members array
+        const membersWithCreator = [...members.map(member => ({
+            userId: member.userId,
+            userType: member.type
+        })), creatorMember]; // Add the creator member here
+
         // Create group with creator information
         const newGroup = new Group({
             name,
-            members: members.map(member => ({
-                userId: member.userId,
-                userType: member.type,
-                name: member.name
-            })),
+            members: membersWithCreator,
             createdBy: {
                 userId: createdBy.userId,
                 userType: createdBy.type,
@@ -399,11 +408,21 @@ router.post('/addGroupMembers', async (req, res) => {
             return res.status(400).json({ error: 'Selected members are already in the group' });
         }
 
-        // Add new members with their userType
-        group.members.push(...uniqueNewMembers.map(member => ({
+        // Add this logic to include the creator as a member
+        const creatorMember = {
+            userId: createdBy.userId,
+            userType: createdBy.type,
+            name: createdBy.name
+        };
+
+        // Include the creator member in the members array
+        const members = [...uniqueNewMembers.map(member => ({
             userId: member.userId,
-            userType: member.type // Make sure to include userType
-        })));
+            userType: member.type
+        })), creatorMember]; // Add the creator member here
+
+        // Add new members with their userType
+        group.members.push(...members);
 
         await group.save();
 
