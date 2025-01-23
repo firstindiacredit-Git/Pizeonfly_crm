@@ -230,14 +230,35 @@ exports.searchTask = async (req, res) => {
 // Update a task
 exports.updateTaskById = async (req, res) => {
   try {
-    // console.log(req.file);
-    req.body.taskImages = req.file?.path;
-    const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = { ...req.body };
+
+    // Handle file upload if present
+    if (req.file) {
+      updateData.taskImages = req.file.path;
+    }
+
+    // Parse and format taskDate if present
+    if (updateData.taskDate) {
+      try {
+        updateData.taskDate = new Date(updateData.taskDate);
+      } catch (err) {
+        console.error('Error parsing date:', err);
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(
+      req.params.id, 
+      updateData,
+      { new: true }
+    );
+
     if (!updatedTask) {
       return res.status(404).json({ message: 'Task not found' });
     }
     res.json(updatedTask);
   } catch (error) {
+    console.error('Update error:', error);
     res.status(500).json({ error: error.message });
   }
 };
