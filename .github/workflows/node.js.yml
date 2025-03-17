@@ -27,7 +27,7 @@ jobs:
     - name: SSH and deploy
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ec2-16-16-246-83.eu-north-1.compute.amazonaws.com
+        host: ec2-13-233-201-65.ap-south-1.compute.amazonaws.com
         username: ubuntu
         key: ${{ secrets.SSH_PRIVATE_KEY }}  # Ensure the private key is added to GitHub Secrets
         script: |
@@ -39,7 +39,7 @@ jobs:
     - name: Ensure .env file is not modified
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ec2-16-16-246-83.eu-north-1.compute.amazonaws.com
+        host: ec2-13-233-201-65.ap-south-1.compute.amazonaws.com
         username: ubuntu
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
