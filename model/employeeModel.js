@@ -72,6 +72,10 @@ const employeeSchema = new Schema({
         upiId: { type: String },
         qrCode: { type: String },
         paymentApp: { type: String }
+    },
+    disabled: {
+        type: Boolean,
+        default: false
     }
 });
 

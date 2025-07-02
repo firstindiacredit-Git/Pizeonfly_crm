@@ -112,6 +112,10 @@ router.post('/employees', upload, async (req, res) => {
         delete employeeData.upiId;
         delete employeeData.paymentApp;
 
+        if (typeof employeeData.disabled !== 'undefined') {
+            employeeData.disabled = employeeData.disabled === 'true' || employeeData.disabled === true;
+        }
+
         const employee = new Employee(employeeData);
         const savedEmployee = await employee.save();
         sendEmail(savedEmployee);
@@ -326,6 +330,10 @@ router.put('/employees/:employeeId', upload, async (req, res) => {
         // Add the bank details object to the update data
         updatedData.bankDetails = bankDetails;
 
+        if (typeof updatedData.disabled !== 'undefined') {
+            updatedData.disabled = updatedData.disabled === 'true' || updatedData.disabled === true;
+        }
+
         // Update the employee with the new data
         const updatedEmployee = await Employee.findByIdAndUpdate(
             req.params.employeeId,
@@ -384,6 +392,24 @@ router.patch('/employees/:employeeId/document', async (req, res) => {
         res.json(updatedEmployee);
     } catch (err) {
         console.error('Error deleting document:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Toggle disable/enable employee
+router.patch('/employees/:employeeId/disable', async (req, res) => {
+    try {
+        const { disabled } = req.body;
+        const updatedEmployee = await Employee.findByIdAndUpdate(
+            req.params.employeeId,
+            { $set: { disabled } },
+            { new: true }
+        );
+        if (!updatedEmployee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+        res.json(updatedEmployee);
+    } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
