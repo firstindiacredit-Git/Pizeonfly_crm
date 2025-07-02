@@ -22,7 +22,7 @@ const AdminSchema = new mongoose.Schema({
     },
     profileImage: {
         type: String,
-        default: 'Images/superadminimg.jpg'
+        default: 'Images/default.jpeg'
     }
 });
 
