@@ -195,9 +195,6 @@ exports.getAllTasks = async (req, res) => {
   }
 };
 
-
-
-
 // Get a single task
 exports.getTaskById = async (req, res) => {
   try {
@@ -256,6 +253,57 @@ exports.updateTaskById = async (req, res) => {
     if (!updatedTask) {
       return res.status(404).json({ message: 'Task not found' });
     }
+
+    // --- EMAIL NOTIFICATION ON UPDATE ---
+    try {
+      // Fetch assignee emails
+      const employees = [];
+      for (let i = 0; i < updatedTask.taskAssignPerson.length; i++) {
+        try {
+          const taskPerson = await Employee.findById(updatedTask.taskAssignPerson[i]);
+          if (taskPerson) {
+            employees.push(taskPerson.emailid);
+          }
+        } catch (err) {
+          console.error(`Error fetching employee with ID ${updatedTask.taskAssignPerson[i]}: ${err.message}`);
+        }
+      }
+
+      // Email config (reuse transporter)
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.USER_EMAIL,
+          pass: process.env.USER_PASSWORD
+        }
+      });
+
+      // Send update email
+      const sendEmailPromises = employees.map(email => {
+        const mailOptions = {
+          from: process.env.USER_EMAIL,
+          to: email,
+          subject: 'Task Updated: Pizeonfly CRM',
+          html: `
+            <h2>Task Updated: ${updatedTask.projectName}</h2>
+            <p><strong>Updated By:</strong> ${updatedTask.assignedBy}</p>
+            <p><strong>Task Title:</strong> ${updatedTask.taskTitle}</p>
+            <p><strong>Due Date:</strong> ${updatedTask.taskEndDate}</p>
+            <p><strong>Priority:</strong> ${updatedTask.taskPriority}</p>
+            <p><strong>Description:</strong> ${updatedTask.description}</p>
+            <br/>
+            <p>This task has been updated. Please review the changes.</p>
+            <a href="https://crm.pizeonfly.com/#/employee-tasks">Pizeonfly CRM Employee Tasks</a>
+          `
+        };
+        return transporter.sendMail(mailOptions);
+      });
+      await Promise.all(sendEmailPromises);
+    } catch (emailError) {
+      console.error('Error sending update email:', emailError);
+    }
+    // --- END EMAIL NOTIFICATION ON UPDATE ---
+
     res.json(updatedTask);
   } catch (error) {
     console.error('Update error:', error);
@@ -266,6 +314,55 @@ exports.updateTaskById = async (req, res) => {
 // Delete a task
 exports.deleteTaskById = async (req, res) => {
   try {
+    // --- EMAIL NOTIFICATION ON DELETE ---
+    const task = await Task.findById(req.params.id);
+    if (task) {
+      try {
+        // Fetch assignee emails
+        const employees = [];
+        for (let i = 0; i < task.taskAssignPerson.length; i++) {
+          try {
+            const taskPerson = await Employee.findById(task.taskAssignPerson[i]);
+            if (taskPerson) {
+              employees.push(taskPerson.emailid);
+            }
+          } catch (err) {
+            console.error(`Error fetching employee with ID ${task.taskAssignPerson[i]}: ${err.message}`);
+          }
+        }
+
+        // Email config (reuse transporter)
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.USER_EMAIL,
+            pass: process.env.USER_PASSWORD
+          }
+        });
+
+        // Send delete email
+        const sendEmailPromises = employees.map(email => {
+          const mailOptions = {
+            from: process.env.USER_EMAIL,
+            to: email,
+            subject: 'Task Deleted: Pizeonfly CRM',
+            html: `
+              <h2>Task Deleted: ${task.projectName}</h2>
+              <p><strong>Deleted By:</strong> ${task.assignedBy}</p>
+              <p><strong>Task Title:</strong> ${task.taskTitle}</p>
+              <br/>
+              <p>This task has been deleted from the system.</p>
+            `
+          };
+          return transporter.sendMail(mailOptions);
+        });
+        await Promise.all(sendEmailPromises);
+      } catch (emailError) {
+        console.error('Error sending delete email:', emailError);
+      }
+    }
+    // --- END EMAIL NOTIFICATION ON DELETE ---
+
     const deletedTask = await Task.findByIdAndDelete(req.params.id);
     if (!deletedTask) {
       return res.status(404).json({ message: 'Task not found' });
