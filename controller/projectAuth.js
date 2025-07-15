@@ -3,6 +3,7 @@ const router = express.Router();
 const Project = require('../model/projectModel');
 const jwt = require('jsonwebtoken');
 const Task = require('../model/taskModel');
+const sendEmail = require('../utils/emailService');
 
 
 // Total projects
@@ -42,6 +43,19 @@ exports.createProject = async (req, res) => {
         });
 
         const savedProject = await project.save();
+        // Populate emails for notification
+        const populatedProject = await Project.findById(savedProject._id)
+            .populate('taskAssignPerson')
+            .populate('clientAssignPerson');
+        // Collect emails
+        const employeeEmails = (populatedProject.taskAssignPerson || []).map(emp => emp.emailid).filter(Boolean);
+        const clientEmails = (populatedProject.clientAssignPerson || []).map(cli => cli.clientEmail).filter(Boolean);
+        const allEmails = [...employeeEmails, ...clientEmails];
+        if (allEmails.length > 0) {
+            const subject = `New Project Created: ${populatedProject.projectName}`;
+            const message = `A new project has been created.\n\nProject Name: ${populatedProject.projectName}\nCategory: ${populatedProject.projectCategory}\nStart Date: ${populatedProject.projectStartDate}\nEnd Date: ${populatedProject.projectEndDate}\nDescription: ${populatedProject.description || ''}`;
+            await sendEmail(subject, message, allEmails);
+        }
         res.status(201).json(savedProject);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -188,6 +202,18 @@ exports.updateProject = async (req, res) => {
         if (!updatedProject) {
             return res.status(404).json({ message: 'Project not found' });
         }
+        // Populate emails for notification
+        const populatedProject = await Project.findById(updatedProject._id)
+            .populate('taskAssignPerson')
+            .populate('clientAssignPerson');
+        const employeeEmails = (populatedProject.taskAssignPerson || []).map(emp => emp.emailid).filter(Boolean);
+        const clientEmails = (populatedProject.clientAssignPerson || []).map(cli => cli.clientEmail).filter(Boolean);
+        const allEmails = [...employeeEmails, ...clientEmails];
+        if (allEmails.length > 0) {
+            const subject = `Project Updated: ${populatedProject.projectName}`;
+            const message = `Project details have been updated.\n\nProject Name: ${populatedProject.projectName}\nCategory: ${populatedProject.projectCategory}\nStart Date: ${populatedProject.projectStartDate}\nEnd Date: ${populatedProject.projectEndDate}\nDescription: ${populatedProject.description || ''}`;
+            await sendEmail(subject, message, allEmails);
+        }
         res.json(updatedProject);
     } catch (err) {
         console.error('Error updating project:', err);
@@ -198,9 +224,22 @@ exports.updateProject = async (req, res) => {
 // Delete a project
 exports.deleteProject = async (req, res) => {
     try {
+        // Find and populate before deleting
+        const projectToDelete = await Project.findById(req.params.projectId)
+            .populate('taskAssignPerson')
+            .populate('clientAssignPerson');
         const deletedProject = await Project.findByIdAndDelete(req.params.projectId);
         if (!deletedProject) {
             return res.status(404).json({ message: 'Project not found' });
+        }
+        // Collect emails
+        const employeeEmails = (projectToDelete?.taskAssignPerson || []).map(emp => emp.emailid).filter(Boolean);
+        const clientEmails = (projectToDelete?.clientAssignPerson || []).map(cli => cli.clientEmail).filter(Boolean);
+        const allEmails = [...employeeEmails, ...clientEmails];
+        if (allEmails.length > 0) {
+            const subject = `Project Deleted: ${projectToDelete.projectName}`;
+            const message = `The following project has been deleted.\n\nProject Name: ${projectToDelete.projectName}\nCategory: ${projectToDelete.projectCategory}\nStart Date: ${projectToDelete.projectStartDate}\nEnd Date: ${projectToDelete.projectEndDate}\nDescription: ${projectToDelete.description || ''}`;
+            await sendEmail(subject, message, allEmails);
         }
         res.json({ message: 'Project deleted successfully' });
     } catch (err) {
