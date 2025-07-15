@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const Employee = require('../model/employeeModel');
 const User = require('../userModel/adminUserModel');
 const dotenv = require('dotenv');
+const sendEmail = require('../utils/emailService');
 
 dotenv.config();
 
@@ -256,49 +257,19 @@ exports.updateTaskById = async (req, res) => {
 
     // --- EMAIL NOTIFICATION ON UPDATE ---
     try {
-      // Fetch assignee emails
-      const employees = [];
-      for (let i = 0; i < updatedTask.taskAssignPerson.length; i++) {
-        try {
-          const taskPerson = await Employee.findById(updatedTask.taskAssignPerson[i]);
-          if (taskPerson) {
-            employees.push(taskPerson.emailid);
-          }
-        } catch (err) {
-          console.error(`Error fetching employee with ID ${updatedTask.taskAssignPerson[i]}: ${err.message}`);
-        }
+      // Populate to get employee emails
+      const populatedTask = await Task.findById(updatedTask._id).populate('taskAssignPerson');
+      let employeeEmails = [];
+      if (Array.isArray(populatedTask.taskAssignPerson)) {
+        employeeEmails = populatedTask.taskAssignPerson.map(emp => emp.emailid).filter(Boolean);
+      } else if (populatedTask.taskAssignPerson && populatedTask.taskAssignPerson.emailid) {
+        employeeEmails = [populatedTask.taskAssignPerson.emailid];
       }
-
-      // Email config (reuse transporter)
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.USER_EMAIL,
-          pass: process.env.USER_PASSWORD
-        }
-      });
-
-      // Send update email
-      const sendEmailPromises = employees.map(email => {
-        const mailOptions = {
-          from: process.env.USER_EMAIL,
-          to: email,
-          subject: 'Task Updated: Pizeonfly CRM',
-          html: `
-            <h2>Task Updated: ${updatedTask.projectName}</h2>
-            <p><strong>Updated By:</strong> ${updatedTask.assignedBy}</p>
-            <p><strong>Task Title:</strong> ${updatedTask.taskTitle}</p>
-            <p><strong>Due Date:</strong> ${updatedTask.taskEndDate}</p>
-            <p><strong>Priority:</strong> ${updatedTask.taskPriority}</p>
-            <p><strong>Description:</strong> ${updatedTask.description}</p>
-            <br/>
-            <p>This task has been updated. Please review the changes.</p>
-            <a href="https://crm.pizeonfly.com/#/employee-tasks">Pizeonfly CRM Employee Tasks</a>
-          `
-        };
-        return transporter.sendMail(mailOptions);
-      });
-      await Promise.all(sendEmailPromises);
+      if (employeeEmails.length > 0) {
+        const subject = `Task Updated: ${populatedTask.projectName}`;
+        const message = `Task details have been updated.\n\nProject Name: ${populatedTask.projectName}\nTask Title: ${populatedTask.taskTitle}\nDue Date: ${populatedTask.taskEndDate}\nPriority: ${populatedTask.taskPriority}\nDescription: ${populatedTask.description || ''}`;
+        await sendEmail(subject, message, employeeEmails);
+      }
     } catch (emailError) {
       console.error('Error sending update email:', emailError);
     }
@@ -315,48 +286,20 @@ exports.updateTaskById = async (req, res) => {
 exports.deleteTaskById = async (req, res) => {
   try {
     // --- EMAIL NOTIFICATION ON DELETE ---
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findById(req.params.id).populate('taskAssignPerson');
     if (task) {
       try {
-        // Fetch assignee emails
-        const employees = [];
-        for (let i = 0; i < task.taskAssignPerson.length; i++) {
-          try {
-            const taskPerson = await Employee.findById(task.taskAssignPerson[i]);
-            if (taskPerson) {
-              employees.push(taskPerson.emailid);
-            }
-          } catch (err) {
-            console.error(`Error fetching employee with ID ${task.taskAssignPerson[i]}: ${err.message}`);
-          }
+        let employeeEmails = [];
+        if (Array.isArray(task.taskAssignPerson)) {
+          employeeEmails = task.taskAssignPerson.map(emp => emp.emailid).filter(Boolean);
+        } else if (task.taskAssignPerson && task.taskAssignPerson.emailid) {
+          employeeEmails = [task.taskAssignPerson.emailid];
         }
-
-        // Email config (reuse transporter)
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.USER_EMAIL,
-            pass: process.env.USER_PASSWORD
-          }
-        });
-
-        // Send delete email
-        const sendEmailPromises = employees.map(email => {
-          const mailOptions = {
-            from: process.env.USER_EMAIL,
-            to: email,
-            subject: 'Task Deleted: Pizeonfly CRM',
-            html: `
-              <h2>Task Deleted: ${task.projectName}</h2>
-              <p><strong>Deleted By:</strong> ${task.assignedBy}</p>
-              <p><strong>Task Title:</strong> ${task.taskTitle}</p>
-              <br/>
-              <p>This task has been deleted from the system.</p>
-            `
-          };
-          return transporter.sendMail(mailOptions);
-        });
-        await Promise.all(sendEmailPromises);
+        if (employeeEmails.length > 0) {
+          const subject = `Task Deleted: ${task.projectName}`;
+          const message = `The following task has been deleted.\n\nProject Name: ${task.projectName}\nTask Title: ${task.taskTitle}\nDescription: ${task.description || ''}`;
+          await sendEmail(subject, message, employeeEmails);
+        }
       } catch (emailError) {
         console.error('Error sending delete email:', emailError);
       }
