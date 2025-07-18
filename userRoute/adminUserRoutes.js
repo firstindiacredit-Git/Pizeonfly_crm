@@ -10,5 +10,7 @@ router.get('/adminuser', userController.getUserProfile);
 router.post('/change-password', userController.changePassword);
 router.put('/update-profile', auth, uploadProfile.single('profileImage'), userController.updateProfile);
 router.post('/verify-security-pin', userController.verifySecurityPin);
+router.post('/forgot-password', userController.forgotPassword);
+router.post('/reset-password', userController.resetPassword);
 
 module.exports = router;

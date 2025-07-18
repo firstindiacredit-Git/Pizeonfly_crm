@@ -2,6 +2,7 @@ const User = require('../userModel/adminUserModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
+const sendEmail = require('../utils/emailService');
 
 dotenv.config();
 
@@ -137,6 +138,67 @@ exports.verifySecurityPin = async (req, res) => {
       res.status(401).json({ success: false, message: "Invalid security PIN" });
     }
   } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Forgot Password
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    if (!email) throw new Error('Email is required');
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Generate reset token (JWT, expires in 1 hour)
+    const resetToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    // Reset link (frontend route)
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/#/reset-password/${resetToken}`;
+    // Email content
+    const subject = 'Password Reset Request';
+    const message = `Hello ${user.username},\n\nPlease click the following link to reset your password:\n${resetLink}\n\nIf you did not request this, please ignore this email.`;
+    await sendEmail(subject, message, user.email);
+    res.json({ message: 'Password reset link sent to your email' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+  try {
+    if (!token || !newPassword) throw new Error('Token and new password are required');
+    if (newPassword.length < 8) throw new Error('Password must be at least 8 characters');
+    // Verify token
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+    // console.log("Payload:", payload);
+    // console.log("UserId for update:", payload.userId);
+    const userBefore = await User.findById(payload.userId);
+    // console.log("User before update:", userBefore);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const updatedUser = await User.findByIdAndUpdate(
+      payload.userId,
+      { password: hashedPassword },
+      { new: true }
+    );
+    // console.log("User after update:", updatedUser);
+    // Send confirmation email
+    const subject = 'Password Updated Successfully';
+    const message = `Hello ${userBefore.username},\n\nYour password has been updated successfully. If you did not perform this action, please contact support immediately.`;
+    await sendEmail(subject, message, userBefore.email);
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
     res.status(400).json({ error: error.message });
   }
 };
