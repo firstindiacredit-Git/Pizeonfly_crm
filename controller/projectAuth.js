@@ -23,7 +23,10 @@ exports.createProject = async (req, res) => {
         const projectImages = req.files['projectImage']?.map(file => file.path.replace('uploads\\', "")) || [];
 
         // Handle project icon
-        const projectIcon = req.files['projectIcon']?.[0]?.path.replace('uploads\\', "") || null;
+        let projectIcon = null;
+        if (req.files['projectIcon'] && req.files['projectIcon'][0] && req.files['projectIcon'][0].path) {
+            projectIcon = req.files['projectIcon'][0].path.replace('uploads\\', "");
+        }
 
         // Filter taskAssignPerson to remove empty values
         const taskAssigner = req.body.taskAssignPerson || [];
@@ -37,7 +40,7 @@ exports.createProject = async (req, res) => {
         const project = new Project({
             ...req.body,
             projectImage: projectImages,
-            projectIcon: projectIcon,
+            projectIcon: projectIcon || null,
             taskAssignPerson: filteredTaskAssigner,
             clientAssignPerson: filteredClientAssigner,
         });
@@ -170,9 +173,11 @@ exports.updateProject = async (req, res) => {
         }
 
         // Handle project icon if a new one is uploaded
-        if (req.files['projectIcon']) {
-            updateData.projectIcon = req.files['projectIcon'][0].path.replace('uploads\\', "");
+        let projectIcon = null;
+        if (req.files['projectIcon'] && req.files['projectIcon'][0] && req.files['projectIcon'][0].path) {
+            projectIcon = req.files['projectIcon'][0].path.replace('uploads\\', "");
         }
+        updateData.projectIcon = projectIcon || null;
 
         // Handle taskAssignPerson
         if (updateData.taskAssignPerson) {
