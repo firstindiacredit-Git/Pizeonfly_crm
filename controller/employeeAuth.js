@@ -62,7 +62,7 @@ router.post('/employees', upload, async (req, res) => {
             employeeData.resume = files.resume[0].path.replace('uploads\\', "");
         }
         if (files.aadhaarCard) {
-            employeeData.aadhaarCard = files.aadhaarCard[0].path.replace('uploads\\', "");
+            employeeData.aadhaarCard = files.aadhaarCard[0].path.replace(/uploads[\\/]/, "");
         }
         if (files.panCard) {
             employeeData.panCard = files.panCard[0].path.replace('uploads\\', "");
@@ -213,9 +213,15 @@ router.post("/employeelogin", async (req, res) => {
 // Get all employees
 router.get('/employees', async (req, res) => {
     try {
-        const employees = await Employee.find()
-        // console.log("testing");
-        res.json(employees);
+        const employees = await Employee.find();
+        const processed = employees.map(emp => ({
+            ...emp._doc,
+            aadhaarCard: emp.aadhaarCard ? emp.aadhaarCard.replace(/^uploads[\\/]/, "") : "",
+            panCard: emp.panCard ? emp.panCard.replace(/^uploads[\\/]/, "") : "",
+            resume: emp.resume ? emp.resume.replace(/^uploads[\\/]/, "") : "",
+            // ...add other fields if needed
+        }));
+        res.json(processed);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -271,7 +277,7 @@ router.put('/employees/:employeeId', upload, async (req, res) => {
                 updatedData.resume = files.resume[0].path.replace('uploads\\', "");
             }
             if (files.aadhaarCard) {
-                updatedData.aadhaarCard = files.aadhaarCard[0].path.replace('uploads\\', "");
+                updatedData.aadhaarCard = files.aadhaarCard[0].path.replace(/uploads[\\/]/, "");
             }
             if (files.panCard) {
                 updatedData.panCard = files.panCard[0].path.replace('uploads\\', "");
