@@ -17,9 +17,11 @@ const urlController = require("./controller/urlShortner");
 const qrController = require("./controller/qrRoutes");
 const adminDashboard = require("./userController/adminDashboard");
 const chatAuth = require("./chatController/chatAuth");
+const chatEmployeeAuth = require("./chatController/chatEmployeeAuth");
 const groupAuth = require("./chatController/groupAuth");
 const meetingController = require("./controller/meetingScheuler");
 const clientMeetingController = require("./meeting-controller/clientMeetingScheuler");
+const officeDocsRoutes = require("./routes/officeDocsRoutes");
 const http = require('http');
 const { Server } = require("socket.io");
 const { UserStatus } = require("./chatModel/chatModel");
@@ -104,6 +106,12 @@ io.on('connection', (socket) => {
     // console.log(`User ${userId} joined their chat room`);
   });
 
+  // Handle joining employee chat room
+  socket.on('join_employee_chat', (employeeId) => {
+    socket.join(`employee_${employeeId}`);
+    console.log(`Employee ${employeeId} joined their chat room`);
+  });
+
   // Handle private message with acknowledgment
   socket.on('private_message', (data) => {
     const { receiverId, message } = data;
@@ -116,6 +124,12 @@ io.on('connection', (socket) => {
   socket.on('typing', (data) => {
     const { receiverId } = data;
     socket.to(receiverId).emit('user_typing', data);
+  });
+
+  // Handle employee typing status
+  socket.on('employee_typing', (data) => {
+    const { receiverId } = data;
+    socket.to(`employee_${receiverId}`).emit('employee_typing', data);
   });
 
   socket.on('join_group', (groupId) => {
@@ -195,9 +209,11 @@ app.use("/api", qrController);
 app.use("/api", adminDashboard);
 app.use("/", urlController);
 app.use("/api", chatAuth);
+app.use("/api/employee-chat", chatEmployeeAuth);
 app.use("/api", groupAuth);
 app.use("/api", meetingController);
 app.use("/api", clientMeetingController);
+app.use("/api/office-docs", officeDocsRoutes);
 
 app.use(express.static(path.join(__dirname, 'dist')));
 

@@ -3,14 +3,14 @@ const path = require('path');
 
 // File filter to check the allowed file types
 const fileFilter = (req, file, cb) => {
-  const fileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|webp|svg|ico|json|txt|csv|json|xml|json5|json4|json3|json2|json1|json0|mp3|mp4|wav|ogg|webm|avi|mov|mkv|mpeg|mpg|m4a|aac|oga|ogg|wav|webm/;
+  const fileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|webp|svg|ico|json|txt|csv|xml|mp3|mp4|wav|ogg|webm|avi|mov|mkv|mpeg|mpg|m4a|aac|oga|flac|wma|rtf|odt|ods|ppt|pptx|odp|zip|rar|7z|tar|gz|html|css|js|py|java|cpp|c|php|bmp|flv|wmv|m4v/;
   const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = fileTypes.test(file.mimetype);
 
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb(new Error('Only images, PDFs, DOC, DOCX, XLS, and XLSX files are allowed!'));
+    cb(new Error('File type not allowed!'));
   }
 };
 
@@ -118,6 +118,36 @@ const chatStorage = multer.diskStorage({
   }
 });
 
+const employeeChatStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    let uploadPath = './uploads/employee-chat';
+    if (file.fieldname === 'images') {
+      uploadPath = './uploads/employee-chat/images';
+    } else if (file.fieldname === 'video') {
+      uploadPath = './uploads/employee-chat/videos';
+    } else if (file.fieldname === 'audio' || file.fieldname === 'recording') {
+      uploadPath = './uploads/employee-chat/audio';
+    } else if (file.fieldname === 'backgroundImage') {
+      uploadPath = './uploads/employee-chat/backgrounds';
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const officeDocsStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads/office-docs');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'doc-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
 const uploadEmployee = multer({
   storage: employeeStorage,
   fileFilter: fileFilter,
@@ -176,4 +206,22 @@ const uploadChat = multer({
   { name: 'backgroundImage', maxCount: 1 }
 ]);
 
-module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile, uploadChat, uploadInvoice }
+const uploadEmployeeChat = multer({
+  storage: employeeChatStorage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
+}).fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'video', maxCount: 1 },
+  { name: 'audio', maxCount: 1 },
+  { name: 'recording', maxCount: 1 },
+  { name: 'backgroundImage', maxCount: 1 }
+]);
+
+const uploadOfficeDocs = multer({
+  storage: officeDocsStorage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit for office documents
+});
+
+module.exports = { uploadEmployee, uploadProject, uploadTask, uploadClient, uploadMessage, uploadProfile, uploadChat, uploadEmployeeChat, uploadInvoice, uploadOfficeDocs }
