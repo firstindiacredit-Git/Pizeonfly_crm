@@ -2,7 +2,7 @@ name: Node.js CI/CD
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master1" ]
 
 jobs:
   deploy:
@@ -32,7 +32,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}  # Ensure the private key is added to GitHub Secrets
         script: |
           cd ~/Pizeonfly_crm
-          git pull origin master
+          git pull origin master1
           pm2 restart all
 
     # Set environment variables on the server (only if .env doesn't already exist)
