@@ -40,6 +40,9 @@ const officeDocsSchema = new mongoose.Schema({
   fileName: {
     type: String
   },
+  originalFileName: {
+    type: String // Store original filename for better downloads
+  },
   filePath: {
     type: String
   },

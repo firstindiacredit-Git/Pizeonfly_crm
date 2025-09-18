@@ -43,6 +43,7 @@ const uploadDocument = async (req, res) => {
     // Handle file upload
     if (uploadType === 'file' && req.file) {
       documentData.fileName = req.file.filename;
+      documentData.originalFileName = req.file.originalname;
       documentData.filePath = req.file.path;
       documentData.fileSize = req.file.size;
       documentData.mimeType = req.file.mimetype;
@@ -313,9 +314,19 @@ const downloadDocument = async (req, res) => {
     // Increment download count
     await document.incrementDownload();
 
-    // Set appropriate headers
-    res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
-    res.setHeader('Content-Type', document.mimeType);
+    // Use original filename if available, otherwise extract from stored filename
+    let originalFileName = document.originalFileName || document.fileName;
+    if (!document.originalFileName && document.fileName && document.fileName.startsWith('doc-')) {
+      // Fallback: Remove 'doc-' prefix and timestamp to get original filename
+      const parts = document.fileName.split('-');
+      if (parts.length >= 3) {
+        originalFileName = parts.slice(2).join('-');
+      }
+    }
+
+    // Set appropriate headers with original filename
+    res.setHeader('Content-Disposition', `attachment; filename="${originalFileName}"`);
+    res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
 
     // Stream the file
     const fileStream = fs.createReadStream(filePath);
